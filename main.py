@@ -37,6 +37,19 @@ class Student(object):
     def add_history(self, history):
         new_records = history.records
         self.hist.records.extend(new_records)
+    def __str__(self) -> str:
+        msg = self.name + "\n"
+        return msg + self.hist.__str__()
+    def __repr__(self) -> str:
+        return self.__str__()
+
+def print_students(students):
+    """
+    Returns a generator function to call a student at a time (with function
+    next)
+    """
+    for student in students:
+        yield student
 
 def order_record(record):
     id, semester = record
