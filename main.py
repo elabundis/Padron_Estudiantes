@@ -3,20 +3,6 @@ import glob
 import numpy as np
 import pandas as pd
 
-# def investigate_these(df, semester, student_id):
-#     "Returns list of students from desired semester whom to investigate"
-#     col = semester - 1  # transform to python index
-#     student = df.iloc[student_id, col]
-#     print(student)
-#     res = np.where(df == student)
-#     print(res)
-#     # I'm only interested in checking students from that show up
-#     # from the current semester on
-#     if( min(res[1]) == col):
-#         print("Requires checking")
-#     else:
-#         print("Does not require checking")
-
 class Hist(object):
     def __init__(self) -> None:
         self.records = []
