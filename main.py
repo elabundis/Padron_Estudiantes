@@ -6,7 +6,7 @@ import pandas as pd
 class Hist(object):
     def __init__(self) -> None:
         self.records = []
-    def add_generation(self, year, record):
+    def add_record(self, year, record):
         self.records.append((year, record))
     def __str__(self) -> str:
         msg = ""
@@ -76,8 +76,8 @@ def investigate(df, year, semester, verbose=False):
             # Add  history sorted by semester
             record = order_record((id, sem))
             # idx = np.argsort(sem)
-            # history.add_generation(year, (id[idx], sem[idx]))
-            history.add_generation(year, record)
+            # history.add_record(year, (id[idx], sem[idx]))
+            history.add_record(year, record)
             pupils.append(Student(student, history))
             if(verbose):
                 print(student)
@@ -103,7 +103,7 @@ def search_across_gens(name, init_gen, database, verbose=False):
                 if(verbose):
                     print(year)
                     print(record)
-                histories.add_generation(year, record)
+                histories.add_record(year, record)
     return histories
 
 def investigate_all(semester, init_gen, database):
