@@ -25,7 +25,7 @@ class Hist(object):
     def __str__(self) -> str:
         msg = ""
         for year, record in self.records:
-            msg = str(year) + ":" + str(record) + str("\n")
+            msg += str(year) + ":" + str(record) + str("\n")
         return msg
     def __repr__(self) -> str:
         return self.__str__()
@@ -35,6 +35,11 @@ class Student(object):
         "The student code can be zero or one"
         self.name = name
         self.hist = hist
+
+def order_record(record):
+    id, semester = record
+    idx = np.argsort(semester)
+    return (id[idx], semester[idx])
 
 def load_database():
     prefix = "generacion_"
@@ -68,27 +73,35 @@ def investigate_these(df, year, semester):
         if( min(sem) == col):
             history = Hist()
             # Add  history sorted by semester
-            idx = np.argsort(sem)
-            history.add_generation(year, (id[idx], sem[idx]))
+            record = order_record((id, sem))
+            # idx = np.argsort(sem)
+            # history.add_generation(year, (id[idx], sem[idx]))
+            history.add_generation(year, record)
             pupils.append(Student(student, history))
             print(student)
-            print((id, sem))
+            print(record)
+            # Notify if a student finished his/her bachelor's
+            if(record[1][-1] == 9):
+                print("Finished bachelor's")
             print()
     return pupils
-        # else:
-        #     print("Does not require checking")
 
 def search_across_gens(name, init_gen, database):
-    records = []
+    """
+    Returns a Hist object with the records of student with given 'name'
+    starting at desired generation 'init_gen' given the generations 'database'
+    """
+    histories =  Hist()
     for year, df in database.items():
         year = int(year)
         if(year >= init_gen):
-            id, sem = np.where(df == name)
-            if(len(id) != 0):
-                idx = np.argsort(sem)
+            record = np.where(df == name)
+            if(len(record[0]) != 0):
+                record = order_record(record)
                 print(year)
-                print((id[idx], sem[idx]))
-                print()
+                print(record)
+                histories.add_generation(year, record)
+    return histories
 
 # Load student generations dataframe
 gen  = load_database()
