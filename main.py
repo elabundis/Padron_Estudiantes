@@ -14,6 +14,8 @@ class Hist(object):
         return self.records[str(year)]
     def get_data(self):
         return self.records
+    def get_first_generation(self) -> int:
+        return np.min( np.array(self.get_generations(), dtype=int) )
     def has_generation(self, year):
         return str(year) in self.records.keys()
     def delete_generation(self, year):
@@ -98,6 +100,37 @@ def investigate(df, year, semester, verbose=False):
                 print()
     return pupils
 
+def remove_formerGen(students, generation, database):
+    """
+    Given a list 'students' of Student instances, remove those students that
+    show up in generations former to the chosen 'generation'. Note: students
+    at 'generation' and later are not touched. Assumes generations in database
+    are consecutive.
+    """
+    years = np.sort(np.array(list(database.keys()), dtype=int))
+    init_year = years[0]
+    N = generation - init_year  # Num. of generations that precede 'generation'
+    if(N == 0): return
+    del_student = []
+    modify_list = False
+    for student in students:
+        name = student.name
+        year = init_year
+        for i in range(N):
+            df = database[str(year)]
+            # Check if student shows up in this generation
+            if(df.isin([name]).any().any()):
+                del_student.append(student)
+                modify_list = True
+                print("Student to be deleted:", name)
+                print(f"Shows up in generation: {year}")
+                print()
+                break # This student will be removed no need to check further
+            year += 1
+    if(modify_list):
+        for student in del_student:
+            students.remove(student)
+
 def search_across_gens(name, init_gen, database, verbose=False):
     """
     Returns a Hist object with the records of student with given 'name'
@@ -119,10 +152,14 @@ def search_across_gens(name, init_gen, database, verbose=False):
 def investigate_all(semester, init_gen, database):
     """
     Returns list of students from desired semester whom to investigate across
-    generations starting from 'init_gen'
+    generations starting from 'init_gen'. Skips those students that show up in
+    a generation former to 'init_gen' since they can be investigated using that
+    generation.
     """
     # Students that require checking with history for initial generation
     students = investigate(database[str(init_gen)], init_gen, semester)
+    # Remove those students who were present in former generations
+    remove_formerGen(students, init_gen, database)
     # Add their histories in remaining generations
     for student in students:
         name = student.name
