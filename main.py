@@ -169,4 +169,5 @@ def investigate_all(semester, init_gen, database):
 
 
 # Load student generations dataframe
-gen  = load_database()
+if(__name__ == '__main__'):
+    gen  = load_database()
