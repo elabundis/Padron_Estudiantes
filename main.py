@@ -5,13 +5,23 @@ import pandas as pd
 
 class Hist(object):
     def __init__(self) -> None:
-        self.records = []
+        self.records = {}
     def add_record(self, year, record):
-        self.records.append((year, record))
+        self.records[str(year)] = record
+    def get_generations(self):
+        return list(self.records.keys())
+    def get_record(self, year):
+        return self.records[str(year)]
+    def get_data(self):
+        return self.records
+    def has_generation(self, year):
+        return str(year) in self.records.keys()
+    def delete_generation(self, year):
+        del self.records[str(year)]
     def __str__(self) -> str:
         msg = ""
-        for year, record in self.records:
-            msg += str(year) + ":" + str(record) + str("\n")
+        for year, record in self.records.items():
+            msg += year + ":" + str(record) + str("\n")
         return msg
     def __repr__(self) -> str:
         return self.__str__()
@@ -21,8 +31,8 @@ class Student(object):
         self.name = name
         self.hist = hist
     def add_history(self, history):
-        new_records = history.records
-        self.hist.records.extend(new_records)
+        new_records = history.get_data()
+        self.hist.records.update(new_records)
     def __str__(self) -> str:
         msg = self.name + "\n"
         return msg + self.hist.__str__()
