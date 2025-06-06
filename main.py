@@ -77,13 +77,19 @@ def investigate(df, year, semester, verbose=False):
     pupils = []
     # Loop through each student (avoid NaN)
     for student in students[students.notna()]:
-        # print(index, student)
+        add_student = False
         # Student history
         id, sem = np.where(df == student)
-        # print(res)
-        # I'm only interested in checking students from that show up
-        # from the current semester on
-        if( min(sem) == col):
+        # For people starting at first semester I'm only interested in those
+        # who did not study from the first to the tenth semester
+        if(semester == 1):
+            if(not np.array_equal(np.sort(sem), np.arange(10)) ):
+                add_student = True
+        # Else, I'm only interested in checking students that show up from the
+        # current semester on
+        elif( min(sem) == col):
+            add_student = True
+        if(add_student):
             history = Hist()
             # Add  history sorted by semester
             record = order_record((id, sem))
