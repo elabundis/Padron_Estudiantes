@@ -81,9 +81,10 @@ def investigate(df, year, semester, verbose=False):
         # Student history
         id, sem = np.where(df == student)
         # For people starting at first semester I'm only interested in those
-        # who did not study from the first to the tenth semester
+        # who did not study until the tenth semester (might have missed a
+        # semester in between)
         if(semester == 1):
-            if(not np.array_equal(np.sort(sem), np.arange(10)) ):
+            if(max(sem) != 9):
                 add_student = True
         # Else, I'm only interested in checking students that show up from the
         # current semester on
