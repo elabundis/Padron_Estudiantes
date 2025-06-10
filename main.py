@@ -92,6 +92,17 @@ def load_database():
         year += 1
     return generation
 
+
+def find_student(name, database):
+    years = np.sort(np.array(list(database.keys()), dtype=int))
+    found = False
+    for year in years:
+        inCurrentGen = database[str(year)].isin([name]).any().any()
+        if(inCurrentGen):
+            print(f"found in year {year}")
+            found = True
+    if(not found): print(f"{name} not found")
+
 def investigate(df, year, semester, verbose=False):
     "Returns list of students from desired semester whom to investigate"
     col = semester - 1  # transform to python index
