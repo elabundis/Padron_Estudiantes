@@ -6,24 +6,35 @@ import pandas as pd
 class Hist(object):
     def __init__(self) -> None:
         self.records = {}
+        self.labels = {}
     def add_record(self, year, record):
         self.records[str(year)] = record
+    def add_label(self, year, label):
+        self.labels[str(year)] = label
     def get_generations(self):
         return list(self.records.keys())
     def get_record(self, year):
         return self.records[str(year)]
+    def get_semesters(self, year):
+        return self.get_record(year)[1]
     def get_data(self):
         return self.records
     def get_first_generation(self) -> int:
         return np.min( np.array(self.get_generations(), dtype=int) )
+    def get_last_generation(self) -> int:
+        return np.max( np.array(self.get_generations(), dtype=int) )
     def has_generation(self, year):
         return str(year) in self.records.keys()
+    def has_semester(self, year, semester):
+        """semester is an integer starting at zero"""
+        return semester in self.get_record(year)[1]
     def delete_generation(self, year):
         del self.records[str(year)]
     def __str__(self) -> str:
         msg = ""
         for year, record in self.records.items():
             msg += year + ":" + str(record) + str("\n")
+            msg += self.labels.get(year, "") + str("\n")
         return msg
     def __repr__(self) -> str:
         return self.__str__()
@@ -48,6 +59,14 @@ def print_students(students):
     """
     for student in students:
         yield student
+
+def did_student_finish(hist):
+    last_gen = hist.get_last_generation()
+    if(last_gen < 2020):
+        max_semester = 9
+    else:
+        max_semester = 9 - 2*(last_gen-2019)
+    return hist.has_semester(last_gen, max_semester)
 
 def order_record(record):
     id, semester = record
@@ -186,6 +205,60 @@ def classify(students):
         for year in student.hist.get_generations():
             generations[year] = generations.get(year, []) + [student]
     return generations
+
+def classify_and_label(students):
+    classified = classify(students)
+    if(classified == {}): return classified
+    generations = np.sort(np.array( list(classified.keys()), dtype=int ))
+    init_gen = generations[0]
+    # Choose a student from the first generation and investigate initial
+    # semester
+    min_semester = min(classified[str(init_gen)][0].hist.get_semesters(init_gen))
+    for gen in generations:
+        students = classified[str(gen)]
+        for student in students:
+            history = student.hist
+            if(gen == init_gen and min_semester == 0):
+                if(len(history.get_generations())==1):
+                    history.add_label(gen, 'desercion de la cohorte')
+                else:
+                    history.add_label(gen, 'rezago de la cohorte')
+            elif(gen == init_gen):
+                if(len(history.get_generations())==1):
+                    if(history.has_semester(gen, 9)):
+                        history.add_label(gen, 'revalidaciones recibidas')
+                    else:
+                        history.add_label(gen, 'desercion de revalidaciones')
+                else:
+                    history.add_label(gen, 'rezago de revalidaciones')
+            else:
+                # student has appeared in a previous generation
+                student_gens = np.array(history.get_generations(),
+                                               dtype=int)
+                participates_in_later_gens = np.any(student_gens>gen)
+                participates_in_initGen_initSem = history.has_semester(init_gen, 0)
+                if(participates_in_later_gens):
+                    if(participates_in_initGen_initSem):
+                        history.add_label(gen, 'rezago de la cohorte')
+                    else:
+                        history.add_label(gen, 'rezago de revalidaciones')
+                else:
+                    # this is their last participation
+                    finished = did_student_finish(history)
+                    if(finished):
+                        if(gen < 2020):
+                            if(participates_in_initGen_initSem):
+                                history.add_label(gen, 'rezago recibido')
+                            else:
+                                history.add_label(gen, 'revalidaciones recibidas')
+                            # Do not label if they finished after 2019
+                    else:
+                        if(participates_in_initGen_initSem):
+                            history.add_label(gen, 'desercion de rezago recibido')
+                        else:
+                            history.add_label(gen, 'desercion de revalidaciones')
+    return classified
+
 
 # Load student generations dataframe
 if(__name__ == '__main__'):
