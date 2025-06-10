@@ -174,6 +174,18 @@ def investigate_all(semester, init_gen, database):
         student.add_history(histories)
     return students
 
+def classify(students):
+    """
+    Returns dictinary with generations as keys that contain list of students
+    that have spent at least one semester in such a generation
+    """
+    if(len(students)==0):
+        print("The list of students is empty")
+    generations = {}
+    for student in students:
+        for year in student.hist.get_generations():
+            generations[year] = generations.get(year, []) + [student]
+    return generations
 
 # Load student generations dataframe
 if(__name__ == '__main__'):
