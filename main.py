@@ -57,8 +57,11 @@ def print_students(students):
     Returns a generator function to call a student at a time (with function
     next)
     """
+    n = 1
     for student in students:
+        print(f"n = {n}")
         yield student
+        n += 1
 
 def did_student_finish(hist):
     last_gen = hist.get_last_generation()
@@ -186,6 +189,7 @@ def investigate_all(semester, init_gen, database):
     students = investigate(database[str(init_gen)], init_gen, semester)
     # Remove those students who were present in former generations
     remove_formerGen(students, init_gen, database)
+    if(len(students)==0):  print("No students found to investigate")
     # Add their histories in remaining generations
     for student in students:
         name = student.name
