@@ -71,6 +71,13 @@ def did_student_finish(hist):
         max_semester = 9 - 2*(last_gen-2019)
     return hist.has_semester(last_gen, max_semester)
 
+def student_finished_generation(semesters, generation):
+    if(generation < 2020):
+        max_semester = 9
+    else:
+        max_semester = 9 - 2*(generation-2019)
+    return max_semester in semesters
+
 def order_record(record):
     id, semester = record
     idx = np.argsort(semester)
@@ -114,10 +121,10 @@ def investigate(df, year, semester, verbose=False):
         # Student history
         id, sem = np.where(df == student)
         # For people starting at first semester I'm only interested in those
-        # who did not study until the tenth semester (might have missed a
+        # who did not study until the final semester (might have missed a
         # semester in between)
         if(semester == 1):
-            if(max(sem) != 9):
+            if(not student_finished_generation(sem, year)):
                 add_student = True
         # Else, I'm only interested in checking students that show up from the
         # current semester on
