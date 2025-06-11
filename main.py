@@ -91,6 +91,18 @@ class Classification(object):
                        1),  self.names[idx][i])
                 locations.append(loc)
         return locations
+    def print_all_locations(self, year):
+        """
+        Indices start at 1 to reduce confusion
+        """
+        # All labels for given generation
+        labels = self.get_all_labels(year)
+        for label in labels:
+            print(label)
+            for loc in self.get_locations(year, label):
+                print(loc)
+            print()
+
     def get_particular_classification(self, year, label):
         tags = self.get_labels_and_locs(year)
         desired_tags = []
