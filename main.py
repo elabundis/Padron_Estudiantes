@@ -87,7 +87,7 @@ class Classification(object):
         locations = []
         for i, label_database in enumerate(self.labels[idx]):
             if(label == label_database):
-                loc = ((self.locs[idx][i][0][0] + 1, self.locs[idx][i][1][0] +
+                loc = ((int(self.locs[idx][i][0][0]) + 1, int(self.locs[idx][i][1][0]) +
                        1),  self.names[idx][i])
                 locations.append(loc)
         return locations
