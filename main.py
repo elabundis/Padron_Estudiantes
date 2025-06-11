@@ -63,13 +63,13 @@ def print_students(students):
         yield student
         n += 1
 
-def did_student_finish(hist):
-    last_gen = hist.get_last_generation()
+def did_student_finish(student_hist):
+    last_gen = student_hist.get_last_generation()
     if(last_gen < 2020):
         max_semester = 9
     else:
         max_semester = 9 - 2*(last_gen-2019)
-    return hist.has_semester(last_gen, max_semester)
+    return student_hist.has_semester(last_gen, max_semester)
 
 def student_finished_generation(semesters, generation):
     if(generation < 2020):
