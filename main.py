@@ -307,8 +307,15 @@ def classify_and_label(students):
                     history.add_label(gen, 'rezago de la cohorte')
             elif(gen == init_gen):
                 if(len(history.get_generations())==1):
+                    # I count as finished if they reach the tenth semester
                     if(history.has_semester(gen, 9)):
                         history.add_label(gen, 'revalidaciones recibidas')
+                    # When they reach the last semester of a given generation
+                    # but that semester is not the 10th I consider they're
+                    # still studyng (could also be classified as
+                    # revalidaciones recibidas)
+                    elif(did_student_finish(history)):
+                        history.add_label(gen, 'still studying')
                     else:
                         history.add_label(gen, 'desercion de revalidaciones')
                 else:
@@ -333,7 +340,9 @@ def classify_and_label(students):
                                 history.add_label(gen, 'rezago recibido')
                             else:
                                 history.add_label(gen, 'revalidaciones recibidas')
-                        # Do not provide final label if they finished after 2019
+                        # Do not provide final label if they finished after
+                        # 2019 (they could also be classified as rezago o
+                        # revalizacion recibida
                         else:
                             history.add_label(gen, 'still studying')
                     else:
