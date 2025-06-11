@@ -266,7 +266,9 @@ def classify_and_label(students):
                                 history.add_label(gen, 'rezago recibido')
                             else:
                                 history.add_label(gen, 'revalidaciones recibidas')
-                            # Do not label if they finished after 2019
+                        # Do not provide final label if they finished after 2019
+                        else:
+                            history.add_label(gen, 'still studying')
                     else:
                         if(participates_in_initGen_initSem):
                             history.add_label(gen, 'desercion de rezago recibido')
