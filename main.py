@@ -52,6 +52,54 @@ class Student(object):
     def __repr__(self) -> str:
         return self.__str__()
 
+class Classification(object):
+    def __init__(self, generations) -> None:
+        self.generations = generations
+    def get_years(self):
+        return list(self.generations.keys())
+    def get_generation(self, year):
+        return self.generations[str(year)]
+    def get_student_label(self, student, year):
+        return student.hist.labels[str(year)]
+    def order_data(self):
+        years =  np.sort(np.array(list(self.generations.keys()), dtype=int))
+        self.idx = {str(years[i]):i for i in range(len(years))}
+        self.names = [[] for i in range(len(years))]
+        self.locs = [[] for i in range(len(years))]
+        self.labels = [[] for i in range(len(years))]
+        for i, year in enumerate(years):
+            students = self.get_generation(year)
+            for student in students:
+                self.labels[i].append(self.get_student_label(student, year))
+                self.locs[i].append(student.hist.get_record(year))
+                self.names[i].append(student.name)
+    def get_all_labels(self, year):
+        idx = self.idx[str(year)]
+        return list(set(self.labels[idx]))
+    def get_labels_and_locs(self, year):
+        idx = self.idx[str(year)]
+        return [(loc, label) for loc, label in zip(self.locs[idx], self.labels[idx])]
+    def get_locations(self, year, label):
+        """
+        Indices start at 1 to reduce confusion
+        """
+        idx = self.idx[str(year)]
+        locations = []
+        for i, label_database in enumerate(self.labels[idx]):
+            if(label == label_database):
+                loc = ((self.locs[idx][i][0][0] + 1, self.locs[idx][i][1][0] +
+                       1),  self.names[idx][i])
+                locations.append(loc)
+        return locations
+    def get_particular_classification(self, year, label):
+        tags = self.get_labels_and_locs(year)
+        desired_tags = []
+        for tag in tags:
+            if(tag[1] == label):
+                desired_tags.append(tag)
+        return desired_tags
+
+
 def print_students(students):
     """
     Returns a generator function to call a student at a time (with function
@@ -281,6 +329,12 @@ def classify_and_label(students):
                             history.add_label(gen, 'desercion de rezago recibido')
                         else:
                             history.add_label(gen, 'desercion de revalidaciones')
+    return classified
+
+def create_classification(students):
+    classified_gens = classify_and_label(students)
+    classified = Classification(classified_gens)
+    classified.order_data()
     return classified
 
 
