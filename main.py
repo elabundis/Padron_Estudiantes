@@ -160,13 +160,17 @@ def load_database():
     return generation
 
 
-def find_student(name, database):
+def student_history(name, database):
     years = np.sort(np.array(list(database.keys()), dtype=int))
     found = False
     for year in years:
-        inCurrentGen = database[str(year)].isin([name]).any().any()
+        df = database[str(year)]
+        inCurrentGen = df.isin([name]).any().any()
         if(inCurrentGen):
             print(f"found in year {year}")
+            id, sem = np.where(df == name)
+            record = order_record((id, sem))
+            print(record)
             found = True
     if(not found): print(f"{name} not found")
 
