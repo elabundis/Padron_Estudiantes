@@ -299,12 +299,12 @@ def classify_and_label(students):
     init_gen = generations[0]
     # Choose a student from the first generation and investigate initial
     # semester
-    min_semester = min(classified[str(init_gen)][0].hist.get_semesters(init_gen))
+    init_sem = min(classified[str(init_gen)][0].hist.get_semesters(init_gen))
     for gen in generations:
         students = classified[str(gen)]
         for student in students:
             history = student.hist
-            if(gen == init_gen and min_semester == 0):
+            if(gen == init_gen and init_sem == 0):
                 if(len(history.get_generations())==1):
                     history.add_label(gen, 'desercion de la cohorte')
                 else:
