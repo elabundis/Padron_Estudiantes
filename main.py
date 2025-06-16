@@ -319,7 +319,11 @@ def classify_and_label(students):
                     # still studyng (could also be classified as
                     # revalidaciones recibidas)
                     elif(did_student_finish(history)):
-                        history.add_label(gen, 'still studying')
+                        # history.add_label(gen, 'still studying')
+                        history.add_label(gen, 'revalidaciones recibidas')
+                        print(f"aun estudiando, unica generacion: {gen}")
+                        print(f"revalidacion recibida: {student.name}")
+                        # print(student)
                     else:
                         history.add_label(gen, 'desercion de revalidaciones')
                 else:
@@ -348,7 +352,16 @@ def classify_and_label(students):
                         # 2019 (they could also be classified as rezago o
                         # revalizacion recibida
                         else:
-                            history.add_label(gen, 'still studying')
+                            # history.add_label(gen, 'still studying')
+                            if(participates_in_initGen_SemOne):
+                                history.add_label(gen, 'rezago recibido')
+                                print(f"aun estudiando, generacion: {gen}")
+                                print(f"rezago recibido: {student.name}")
+                            else:
+                                history.add_label(gen, 'revalidaciones recibidas')
+                                print(f"aun estudiando, generacion: {gen}")
+                                print(f"revalidaciones recibidas: {student.name}")
+                            # print(student)
                     else:
                         if(participates_in_initGen_initSem):
                             history.add_label(gen, 'desercion de rezago recibido')
