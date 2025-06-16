@@ -59,6 +59,19 @@ class Classification(object):
         return list(self.generations.keys())
     def get_generation(self, year):
         return self.generations[str(year)]
+    def get_first_generation(self):
+        first_year = np.min( np.array(self.get_years(), dtype=int) )
+        return self.get_generation(first_year)
+    def get_student_instance(self, name):
+        """
+        We assume all students share the same first generation
+        """
+        first_gen_students = self.get_first_generation()
+        for student in first_gen_students:
+            if(student.name == name):
+                return student
+        print(f"No student found with name {name}. Returning None")
+        return None
     def get_student_label(self, student, year):
         return student.hist.labels[str(year)]
     def order_data(self):
