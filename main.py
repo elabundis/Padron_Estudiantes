@@ -299,12 +299,12 @@ def classify_and_label(students):
     init_gen = generations[0]
     # Choose a student from the first generation and investigate initial
     # semester
-    min_semester = min(classified[str(init_gen)][0].hist.get_semesters(init_gen))
+    init_sem = min(classified[str(init_gen)][0].hist.get_semesters(init_gen))
     for gen in generations:
         students = classified[str(gen)]
         for student in students:
             history = student.hist
-            if(gen == init_gen and min_semester == 0):
+            if(gen == init_gen and init_sem == 0):
                 if(len(history.get_generations())==1):
                     history.add_label(gen, 'desercion de la cohorte')
                 else:
@@ -316,10 +316,10 @@ def classify_and_label(students):
                         history.add_label(gen, 'revalidaciones recibidas')
                     # When they reach the last semester of a given generation
                     # but that semester is not the 10th I consider they're
-                    # still studyng (could also be classified as
-                    # revalidaciones recibidas)
+                    # still studyng
                     elif(did_student_finish(history)):
-                        history.add_label(gen, 'still studying')
+                        # Still studying
+                        history.add_label(gen, 'revalidaciones recibidas')
                     else:
                         history.add_label(gen, 'desercion de revalidaciones')
                 else:
@@ -329,9 +329,9 @@ def classify_and_label(students):
                 student_gens = np.array(history.get_generations(),
                                                dtype=int)
                 participates_in_later_gens = np.any(student_gens>gen)
-                participates_in_initGen_initSem = history.has_semester(init_gen, 0)
+                participates_in_initGen_SemOne = history.has_semester(init_gen, 0)
                 if(participates_in_later_gens):
-                    if(participates_in_initGen_initSem):
+                    if(participates_in_initGen_SemOne):
                         history.add_label(gen, 'rezago de la cohorte')
                     else:
                         history.add_label(gen, 'rezago de revalidaciones')
@@ -340,17 +340,20 @@ def classify_and_label(students):
                     finished = did_student_finish(history)
                     if(finished):
                         if(gen < 2020):
-                            if(participates_in_initGen_initSem):
+                            if(participates_in_initGen_SemOne):
                                 history.add_label(gen, 'rezago recibido')
                             else:
                                 history.add_label(gen, 'revalidaciones recibidas')
-                        # Do not provide final label if they finished after
-                        # 2019 (they could also be classified as rezago o
-                        # revalizacion recibida
+                        # Might provide special labels in the future for those
+                        # who are not done yet
                         else:
-                            history.add_label(gen, 'still studying')
+                            # Still studying
+                            if(participates_in_initGen_SemOne):
+                                history.add_label(gen, 'rezago recibido')
+                            else:
+                                history.add_label(gen, 'revalidaciones recibidas')
                     else:
-                        if(participates_in_initGen_initSem):
+                        if(participates_in_initGen_SemOne):
                             history.add_label(gen, 'desercion de rezago recibido')
                         else:
                             history.add_label(gen, 'desercion de revalidaciones')
