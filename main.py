@@ -316,14 +316,10 @@ def classify_and_label(students):
                         history.add_label(gen, 'revalidaciones recibidas')
                     # When they reach the last semester of a given generation
                     # but that semester is not the 10th I consider they're
-                    # still studyng (could also be classified as
-                    # revalidaciones recibidas)
+                    # still studyng
                     elif(did_student_finish(history)):
-                        # history.add_label(gen, 'still studying')
+                        # Still studying
                         history.add_label(gen, 'revalidaciones recibidas')
-                        print(f"aun estudiando, unica generacion: {gen}")
-                        print(f"revalidacion recibida: {student.name}")
-                        # print(student)
                     else:
                         history.add_label(gen, 'desercion de revalidaciones')
                 else:
@@ -348,20 +344,14 @@ def classify_and_label(students):
                                 history.add_label(gen, 'rezago recibido')
                             else:
                                 history.add_label(gen, 'revalidaciones recibidas')
-                        # Do not provide final label if they finished after
-                        # 2019 (they could also be classified as rezago o
-                        # revalizacion recibida
+                        # Might provide special labels in the future for those
+                        # who are not done yet
                         else:
-                            # history.add_label(gen, 'still studying')
+                            # Still studying
                             if(participates_in_initGen_SemOne):
                                 history.add_label(gen, 'rezago recibido')
-                                print(f"aun estudiando, generacion: {gen}")
-                                print(f"rezago recibido: {student.name}")
                             else:
                                 history.add_label(gen, 'revalidaciones recibidas')
-                                print(f"aun estudiando, generacion: {gen}")
-                                print(f"revalidaciones recibidas: {student.name}")
-                            # print(student)
                     else:
                         if(participates_in_initGen_initSem):
                             history.add_label(gen, 'desercion de rezago recibido')
