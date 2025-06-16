@@ -60,6 +60,9 @@ class Classification(object):
     def get_years(self):
         return list(self.generations.keys())
     def get_generation(self, year):
+        """
+        Returns list of students corresponding to 'year'
+        """
         return self.generations[str(year)]
     def get_first_generation(self):
         first_year = np.min( np.array(self.get_years(), dtype=int) )
