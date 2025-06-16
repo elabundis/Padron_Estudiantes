@@ -329,9 +329,9 @@ def classify_and_label(students):
                 student_gens = np.array(history.get_generations(),
                                                dtype=int)
                 participates_in_later_gens = np.any(student_gens>gen)
-                participates_in_initGen_initSem = history.has_semester(init_gen, 0)
+                participates_in_initGen_SemOne = history.has_semester(init_gen, 0)
                 if(participates_in_later_gens):
-                    if(participates_in_initGen_initSem):
+                    if(participates_in_initGen_SemOne):
                         history.add_label(gen, 'rezago de la cohorte')
                     else:
                         history.add_label(gen, 'rezago de revalidaciones')
@@ -340,7 +340,7 @@ def classify_and_label(students):
                     finished = did_student_finish(history)
                     if(finished):
                         if(gen < 2020):
-                            if(participates_in_initGen_initSem):
+                            if(participates_in_initGen_SemOne):
                                 history.add_label(gen, 'rezago recibido')
                             else:
                                 history.add_label(gen, 'revalidaciones recibidas')
@@ -353,7 +353,7 @@ def classify_and_label(students):
                             else:
                                 history.add_label(gen, 'revalidaciones recibidas')
                     else:
-                        if(participates_in_initGen_initSem):
+                        if(participates_in_initGen_SemOne):
                             history.add_label(gen, 'desercion de rezago recibido')
                         else:
                             history.add_label(gen, 'desercion de revalidaciones')
