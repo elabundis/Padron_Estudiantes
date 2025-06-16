@@ -15,6 +15,8 @@ class Hist(object):
         return list(self.records.keys())
     def get_record(self, year):
         return self.records[str(year)]
+    def get_label(self, year):
+        return self.labels[str(year)]
     def get_semesters(self, year):
         return self.get_record(year)[1]
     def get_data(self):
@@ -59,8 +61,27 @@ class Classification(object):
         return list(self.generations.keys())
     def get_generation(self, year):
         return self.generations[str(year)]
+    def get_first_generation(self):
+        first_year = np.min( np.array(self.get_years(), dtype=int) )
+        return self.get_generation(first_year)
+    def get_student_instance(self, name):
+        """
+        We assume all students share the same first generation
+        """
+        first_gen_students = self.get_first_generation()
+        for student in first_gen_students:
+            if(student.name == name):
+                return student
+        print(f"No student found with name {name}. Returning None")
+        return None
     def get_student_label(self, student, year):
-        return student.hist.labels[str(year)]
+        return student.hist.get_label(year)
+    def print_student_labels(self, student):
+        years = student.hist.get_generations()
+        msg = ""
+        for year in years:
+            msg += f"year {year}:" + self.get_student_label(student, year) + "\n"
+        print(msg)
     def order_data(self):
         years =  np.sort(np.array(list(self.generations.keys()), dtype=int))
         self.idx = {str(years[i]):i for i in range(len(years))}
