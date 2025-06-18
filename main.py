@@ -168,6 +168,7 @@ def order_record(record):
     return (id[idx], semester[idx])
 
 def load_database():
+    directory = "Databases/"
     prefix = "generacion_"
     year_init  = 2015
     year_final = 2023
@@ -177,7 +178,7 @@ def load_database():
     year = year_init
     print("Files: ")
     for i in range(numFiles):
-        filename = glob.glob(prefix + str(year) + "*")[0]
+        filename = glob.glob(directory + prefix + str(year) + "*")[0]
         print(filename)
         generation[str(year)] =  pd.read_csv(filename)
         year += 1
