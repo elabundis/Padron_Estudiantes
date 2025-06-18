@@ -136,37 +136,6 @@ class Classification(object):
         return desired_tags
 
 
-def print_students(students):
-    """
-    Returns a generator function to call a student at a time (with function
-    next)
-    """
-    n = 1
-    for student in students:
-        print(f"n = {n}")
-        yield student
-        n += 1
-
-def did_student_finish(student_hist):
-    last_gen = student_hist.get_last_generation()
-    if(last_gen < 2020):
-        max_semester = 9
-    else:
-        max_semester = 9 - 2*(last_gen-2019)
-    return student_hist.has_semester(last_gen, max_semester)
-
-def student_finished_generation(semesters, generation):
-    if(generation < 2020):
-        max_semester = 9
-    else:
-        max_semester = 9 - 2*(generation-2019)
-    return max_semester in semesters
-
-def order_record(record):
-    id, semester = record
-    idx = np.argsort(semester)
-    return (id[idx], semester[idx])
-
 def load_database():
     directory = "Databases/"
     prefix = "generacion_"
@@ -184,57 +153,25 @@ def load_database():
         year += 1
     return generation
 
+def order_record(record):
+    id, semester = record
+    idx = np.argsort(semester)
+    return (id[idx], semester[idx])
 
-def student_history(name, database):
-    years = np.sort(np.array(list(database.keys()), dtype=int))
-    found = False
-    for year in years:
-        df = database[str(year)]
-        inCurrentGen = df.isin([name]).any().any()
-        if(inCurrentGen):
-            print(f"found in year {year}")
-            id, sem = np.where(df == name)
-            record = order_record((id, sem))
-            print(record)
-            found = True
-    if(not found): print(f"{name} not found")
+def student_finished_generation(semesters, generation):
+    if(generation < 2020):
+        max_semester = 9
+    else:
+        max_semester = 9 - 2*(generation-2019)
+    return max_semester in semesters
 
-def investigate(df, year, semester, verbose=False):
-    "Returns list of students from desired semester whom to investigate"
-    col = semester - 1  # transform to python index
-    students = df.iloc[:, col]
-    pupils = []
-    # Loop through each student (avoid NaN)
-    for student in students[students.notna()]:
-        add_student = False
-        # Student history
-        id, sem = np.where(df == student)
-        # For people starting at first semester I'm only interested in those
-        # who did not study until the final semester (might have missed a
-        # semester in between)
-        if(semester == 1):
-            if(not student_finished_generation(sem, year)):
-                add_student = True
-        # Else, I'm only interested in checking students that show up from the
-        # current semester on
-        elif( min(sem) == col):
-            add_student = True
-        if(add_student):
-            history = Hist()
-            # Add  history sorted by semester
-            record = order_record((id, sem))
-            # idx = np.argsort(sem)
-            # history.add_record(year, (id[idx], sem[idx]))
-            history.add_record(year, record)
-            pupils.append(Student(student, history))
-            if(verbose):
-                print(student)
-                print(record)
-                # Notify if a student finished his/her bachelor's
-                if(record[1][-1] == 9):
-                    print("Finished bachelor's")
-                print()
-    return pupils
+def did_student_finish(student_hist):
+    last_gen = student_hist.get_last_generation()
+    if(last_gen < 2020):
+        max_semester = 9
+    else:
+        max_semester = 9 - 2*(last_gen-2019)
+    return student_hist.has_semester(last_gen, max_semester)
 
 def remove_formerGen(students, generation, database):
     """
@@ -284,6 +221,43 @@ def search_across_gens(name, init_gen, database, verbose=False):
                     print(record)
                 histories.add_record(year, record)
     return histories
+
+def investigate(df, year, semester, verbose=False):
+    "Returns list of students from desired semester whom to investigate"
+    col = semester - 1  # transform to python index
+    students = df.iloc[:, col]
+    pupils = []
+    # Loop through each student (avoid NaN)
+    for student in students[students.notna()]:
+        add_student = False
+        # Student history
+        id, sem = np.where(df == student)
+        # For people starting at first semester I'm only interested in those
+        # who did not study until the final semester (might have missed a
+        # semester in between)
+        if(semester == 1):
+            if(not student_finished_generation(sem, year)):
+                add_student = True
+        # Else, I'm only interested in checking students that show up from the
+        # current semester on
+        elif( min(sem) == col):
+            add_student = True
+        if(add_student):
+            history = Hist()
+            # Add  history sorted by semester
+            record = order_record((id, sem))
+            # idx = np.argsort(sem)
+            # history.add_record(year, (id[idx], sem[idx]))
+            history.add_record(year, record)
+            pupils.append(Student(student, history))
+            if(verbose):
+                print(student)
+                print(record)
+                # Notify if a student finished his/her bachelor's
+                if(record[1][-1] == 9):
+                    print("Finished bachelor's")
+                print()
+    return pupils
 
 def investigate_all(semester, init_gen, database):
     """
@@ -389,6 +363,31 @@ def create_classification(students):
     classified = Classification(classified_gens)
     classified.order_data()
     return classified
+
+def print_students(students):
+    """
+    Returns a generator function to call a student at a time (with function
+    next)
+    """
+    n = 1
+    for student in students:
+        print(f"n = {n}")
+        yield student
+        n += 1
+
+def student_history(name, database):
+    years = np.sort(np.array(list(database.keys()), dtype=int))
+    found = False
+    for year in years:
+        df = database[str(year)]
+        inCurrentGen = df.isin([name]).any().any()
+        if(inCurrentGen):
+            print(f"found in year {year}")
+            id, sem = np.where(df == name)
+            record = order_record((id, sem))
+            print(record)
+            found = True
+    if(not found): print(f"{name} not found")
 
 
 # Load student generations dataframe
