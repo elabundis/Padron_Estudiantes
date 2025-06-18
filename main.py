@@ -388,8 +388,3 @@ def student_history(name, database):
             print(record)
             found = True
     if(not found): print(f"{name} not found")
-
-
-# Load student generations dataframe
-if(__name__ == '__main__'):
-    gen  = load_database()
