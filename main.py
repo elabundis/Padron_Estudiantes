@@ -381,10 +381,15 @@ def classify_and_label(students):
                             history.add_label(gen, 'desercion de revalidaciones')
     return classified
 
-def create_classification(students):
+def classify_students(students):
     classified_gens = classify_and_label(students)
     classified = Classification(classified_gens)
     classified.order_data()
+    return classified
+
+def create_classification(semester, generation, database):
+    students = investigate_all(semester, generation, database)
+    classified = classify_students(students)
     return classified
 
 def print_students(students):
