@@ -322,7 +322,19 @@ def classify_and_label(students):
                     else:
                         history.add_label(gen, 'desercion de revalidaciones')
                 else:
-                    history.add_label(gen, 'rezago de revalidaciones')
+                    # It is possible that a student participates in a future
+                    # generation even if he finishes in the current one (he
+                    # takes a class from the generation preceding him while
+                    # still taking his classes)
+                    sems = history.get_semesters(gen) # semesters he participates
+                                                      # in current generation
+                    if(student_finished_generation(sems, gen)):
+                        history.add_label(gen, 'revalidaciones recibidas')
+                        msg = f"student {student.name} finished in year {gen} "
+                        msg += "but also participates in future years"
+                        print(msg)
+                    else:
+                        history.add_label(gen, 'rezago de revalidaciones')
             else:
                 # student has appeared in a previous generation
                 student_gens = np.array(history.get_generations(),
@@ -336,6 +348,7 @@ def classify_and_label(students):
                         history.add_label(gen, 'rezago de revalidaciones')
                 else:
                     # this is their last participation
+                    # Check if student finished in his last participation
                     finished = did_student_finish(history)
                     if(finished):
                         if(gen < 2020):
@@ -354,6 +367,16 @@ def classify_and_label(students):
                     else:
                         if(participates_in_initGen_SemOne):
                             history.add_label(gen, 'desercion de rezago recibido')
+                        # He might have finished in his initial generation and
+                        # have just taken some course in this one. For such a
+                        # case I do not have a label at the moment
+                        elif(student_finished_generation(
+                                    history.get_semesters(init_gen), init_gen)):
+                            history.add_label(gen, 'unknown')
+                            msg = f"Label is 'unknown' for {student.name} "
+                            msg += f"during generation {gen} "
+                            msg += "(fisnished in his first generation)"
+                            print(msg)
                         else:
                             history.add_label(gen, 'desercion de revalidaciones')
     return classified
