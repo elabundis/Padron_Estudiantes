@@ -6,8 +6,8 @@ name = "pypi"
 [packages]
 numpy = "*"
 pandas = "*"
-pdfminer = "*"
 ipython = "*"
+pymupdf = "*"
 
 [dev-packages]
 ipdb = "*"
