@@ -1,11 +1,12 @@
 import argparse
 import re
+import reprlib
 
 import pymupdf
 
 from typing import List
 
-class StudentRegister(object):
+class Page(object):
     def __init__(self,
                  lines: List[str],
                  header:int = 8,
@@ -86,6 +87,16 @@ class StudentRegister(object):
                 vals.append(fields[-1])
                 data.update({keys[i]:vals[i+1] for i in range(len(keys))})
         self.metadata = data
+    def __str__(self) -> str:
+        return "\n".join(self.lines)
+    def __repr__(self) -> str:
+        cls = self.__class__.__name__
+        string = '{}({}, header={!r}, footer={!r}, metadata={!r})'
+        # reprlib will shorten long strings and maximum number of list elements
+        return string.format(cls, reprlib.repr(self.lines), self.header,
+                             self.footer, self.metadata)
+
+class StudentRegister(Page):
     def get_students(self):
         def check_names(name):
             if(len(name.split()) < 3):
@@ -122,10 +133,6 @@ class StudentRegister(object):
             check_student(code, student)
             students[code].append(student)
         return students
-    def __str__(self) -> str:
-        return "\n".join(self.lines)
-    # def __repr__(self) -> str:
-    #     return self.__str__()
 
 
 def read_pdf(filename: str) -> List[List[str]]:
