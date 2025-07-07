@@ -87,17 +87,22 @@ class StudentRegister(object):
                 data.update({keys[i]:vals[i+1] for i in range(len(keys))})
         self.metadata = data
     def get_students(self):
-        def check_names():
-            # Needs implementation
-            return True
-        def check_ids():
-            # Needs implementation
-            return True
-        def check_student(code):
+        def check_names(name):
+            if(len(name.split()) < 3):
+                print(f"Student name with fewer than three words: {name}")
+            if(re.search(r"\d", name)):
+                print(f"Student name with a digit: {name}")
+        def check_ids(id):
+            # The ID must have the following form:
+            # starts with one or more digits then a dash (-) and then one digit
+            pattern = r"^\d+-\d$"
+            if(not re.search(pattern, id)):
+                print(f"Wrong ID: {id}")
+        def check_student(code, student):
             if(code==0):
-                return check_ids()
+                return check_ids(student)
             elif(code==1):
-                return check_names()
+                return check_names(student)
             else:
                 raise Exception("bad code: use '0' for ids and '1' for names")
         student_info = self.get_body()
@@ -114,8 +119,8 @@ class StudentRegister(object):
             codes = [0, 1]
         for i, student in enumerate(student_info):
             code = codes[i%2]
-            if(check_student(code)):
-                students[code].append(student)
+            check_student(code, student)
+            students[code].append(student)
         return students
     def __str__(self) -> str:
         return "\n".join(self.lines)
