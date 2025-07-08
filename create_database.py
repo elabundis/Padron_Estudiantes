@@ -4,18 +4,17 @@ import reprlib
 
 import pymupdf
 
+from dataclasses import dataclass, field
 from typing import List
 
-class Page(object):
-    def __init__(self,
-                 lines: List[str],
-                 headerSize:int = 8,
-                 footerSize:int = 2,
-                 metadata:dict[str, str] = {}):
-        self.lines = lines # List of lines
-        self.headerSize = headerSize
-        self.footerSize = footerSize
-        self.metadata = metadata
+@dataclass
+class Page:
+    """Class to store information of a page extracted from a pdf"""
+    lines: List[str]
+    headerSize: int = 8
+    footerSize: int = 2
+    metadata: dict[str, str] = field(default_factory=dict)
+
     def get_size(self) -> int:
         return len(self.lines)
     def get_headerSize(self) -> int:
