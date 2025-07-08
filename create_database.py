@@ -34,6 +34,8 @@ class Page:
     def get_footer(self) -> str:
         N = self.get_footerSize()
         return "\n".join(self.lines[-N:])
+    def readlines(self) -> list[str]:
+        return self.lines
     def readbody(self) -> list[str]:
         N = self.get_bodySize()
         idx = self.get_headerSize()
