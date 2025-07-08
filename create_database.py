@@ -10,8 +10,8 @@ from dataclasses import dataclass, field
 class Page:
     """Class to store information of a page extracted from a pdf"""
     lines: list[str]
-    headerSize: int = 8
-    footerSize: int = 2
+    headerSize: int = 0
+    footerSize: int = 0
     metadata: dict[str, str] = field(default_factory=dict)
 
     def get_size(self) -> int:
@@ -96,7 +96,10 @@ class Page:
                              self.get_footerSize(),
                              self.get_metadata())
 
+@dataclass
 class StudentRegister(Page):
+    headerSize: int = 8
+    footerSize: int = 2
     def get_students(self):
         def check_names(name):
             if(len(name.split()) < 3):
