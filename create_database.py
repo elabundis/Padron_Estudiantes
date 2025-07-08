@@ -5,12 +5,11 @@ import reprlib
 import pymupdf
 
 from dataclasses import dataclass, field
-from typing import List
 
 @dataclass
 class Page:
     """Class to store information of a page extracted from a pdf"""
-    lines: List[str]
+    lines: list[str]
     headerSize: int = 8
     footerSize: int = 2
     metadata: dict[str, str] = field(default_factory=dict)
@@ -136,7 +135,7 @@ class StudentRegister(Page):
         return students
 
 
-def read_pdf(filename: str) -> List[List[str]]:
+def read_pdf(filename: str) -> list[list[str]]:
     """
     Turns pdf file into strings. It returns a list of pages, each page
     defined by a list of its lines.
