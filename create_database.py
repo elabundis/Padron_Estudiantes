@@ -34,7 +34,7 @@ class Page:
     def get_footer(self) -> str:
         N = self.get_footerSize()
         return "\n".join(self.lines[-N:])
-    def get_body(self) -> list[str]:
+    def readbody(self) -> list[str]:
         N = self.get_bodySize()
         idx = self.get_headerSize()
         return self.lines[idx:idx+N]
@@ -116,7 +116,7 @@ class StudentRegister(Page):
                 return check_names(student)
             else:
                 raise Exception("bad code: use '0' for ids and '1' for names")
-        student_info = self.get_body()
+        student_info = self.readbody()
         students = [[], []] # First col. IDS, second col. names
         # Students are given by name and id in separate lines of 'self.lines'.
         # Sometimes the 'name' comes before the 'id' or the other way around.
