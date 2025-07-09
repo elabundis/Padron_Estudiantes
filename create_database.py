@@ -57,12 +57,9 @@ class Page:
         return None
     def analizeHeader(self, sep:str = ':'):
         """
-        Retrieves information from the fields defined by the separator 'sep' in
-        a dictionary and sets the metadata parameter.
+        Sets the metadata attribute using the header fields defined by the
+        separator 'sep'.
 
-        Header:
-            The header is defined as the section from the top of the page until
-            the line where student names and ID's show up.
         Fields:
             If there are more than one separators in a line, the words
             immediately before them are stored as keys and the words that are
