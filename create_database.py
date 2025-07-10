@@ -1,4 +1,5 @@
 import argparse
+import pandas as pd
 import re
 import reprlib
 
@@ -188,7 +189,7 @@ class StudentRegister(Page):
         self.headerSize = headerSize
         self.footerSize = footerSize
 
-    def get_students(self):
+    def get_students(self) -> pd.DataFrame:
         def check_names(name):
             if(len(name.split()) < 3):
                 print(f"Student name with fewer than three words: {name}")
@@ -220,7 +221,11 @@ class StudentRegister(Page):
             code = codes[i%2]
             check_student(code, student)
             students[code].append(student)
-        return students
+            data = {
+                'id': students[0],
+                'name': students[1]
+            }
+        return pd.DataFrame(data= data)
 
 
 def read_pdf(filename: str) -> list[list[str]]:
