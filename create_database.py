@@ -97,8 +97,96 @@ class Page:
 
 @dataclass
 class StudentRegister(Page):
-    headerSize: int = 8
-    footerSize: int = 2
+    headerSize: int | None = None
+    footerSize: int | None = None
+
+    def is_id(self, string:str) -> bool:
+        # The ID must have the following form:
+        # starts with one or more digits then a dash (-) and then one digit
+        pattern = r"^\d+-\d$"
+        return bool(re.search(pattern, string))
+    def can_be_name(self, string) -> bool:
+        """
+        Assumes that string has been stripped (no spaces at start or end) and
+        has only capital letters.
+        """
+        # Matches alphabetic characters in Spanish and spaces
+        pattern = r"^[A-ZÑÜ ]+$"
+        exclude = "NOMBRE DEL ALUMNO"
+        if(re.search(pattern, string)):
+            if(len(string.split())>2 and string!=exclude):
+                return True
+        return False
+    def findSections(self) -> None:
+        """
+        Tries to find the sections on the student register: header, body, and
+        footer; it sets the headerSize and footerSize attributes.
+
+        A StudentRegister must always have a nonempty header. As such, this
+        method returns an Exception if header is not found.
+
+        Header:
+            The header is defined as the section from the top of the page and
+            before the first line where a student name or ID show up. Else,
+            before the footer is reached.
+        Footer:
+            The lines at the bottom that contain 'TOTAL DE ALUMNOS POR GRUPO'
+            and the respective integer. No other words can be in between and
+            these must be the last lines of the page.
+        """
+        def no_header():
+            raise Exception('No header found')
+        def first_student(lines) -> int | None:
+            """Returns index of first student or None if no student is found"""
+            N = len(lines)
+            for i, line in enumerate(lines):
+                if(self.is_id(line)):
+                    if(i==0):
+                        if(self.can_be_name(lines[i+1])):
+                            return 0
+                    elif(i==N-1):
+                        if(self.can_be_name(lines[i-1])):
+                            return i-1
+                    elif(self.can_be_name(lines[i-1])):
+                        return i-1
+                    elif(self.can_be_name(lines[i+1])):
+                        return i
+                    raise Exception(f"Found student ID but not his name (ID: {line})")
+            return
+        def has_footer(lines, linesFooter):
+            assert(linesFooter==2)
+            footer_keyword = 'TOTAL DE ALUMNOS POR GRUPO'
+            for i, line in enumerate(lines[-linesFooter:]):
+                if(line.isdecimal()):
+                    # Check the other line for the footer_keyword
+                    string = lines[-1-i].translate(del_punctuation()).strip()
+                    if(string==footer_keyword):
+                        # Footer has been found
+                        return True
+            return False
+
+        lines = self.readlines()
+        # Look for first student and update headerSize
+        headerSize = first_student(lines)
+        # It is not allowed to have an empty header
+        if(headerSize == 0): return no_header()
+
+        # Find footer and update footerSize
+        footerSize = 0
+        linesFooter = 2
+        if(has_footer(lines, linesFooter)):
+            footerSize = linesFooter
+
+        # If no students were found, check if there's a footer and update
+        # headerSize
+        if(not headerSize):
+            if(footerSize):
+                headerSize = self.get_size() - footerSize
+            else:
+                return no_header()
+        self.headerSize = headerSize
+        self.footerSize = footerSize
+
     def get_students(self):
         def check_names(name):
             if(len(name.split()) < 3):
@@ -106,10 +194,7 @@ class StudentRegister(Page):
             if(re.search(r"\d", name)):
                 print(f"Student name with a digit: {name}")
         def check_ids(id):
-            # The ID must have the following form:
-            # starts with one or more digits then a dash (-) and then one digit
-            pattern = r"^\d+-\d$"
-            if(not re.search(pattern, id)):
+            if(not self.is_id(id)):
                 print(f"Wrong ID: {id}")
         def check_student(code, student):
             if(code==0):
@@ -155,12 +240,16 @@ def read_pdf(filename: str) -> list[list[str]]:
 def translator():
     return str.maketrans({'Á': 'A', 'É':'E', 'Í':'I', 'Ó':'O', 'Ú':'U'})
 
+def del_punctuation():
+    return str.maketrans({':' : '', ',' : '', '.' : ''})
+
 def tables(filename: str):
     doc = read_pdf(filename)
     pages = []
     for i, page_lines in enumerate(doc):
-        page = StudentRegister(page_lines, headerSize=8, footerSize=2)
+        page = StudentRegister(page_lines)
         page.allCapsNoAccents()
+        page.findSections()
         page.analizeHeader()
         pages.append(page)
     return pages
