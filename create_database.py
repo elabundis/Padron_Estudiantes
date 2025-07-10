@@ -6,6 +6,9 @@ import pymupdf
 
 from dataclasses import dataclass, field
 
+class HeaderError(Exception):
+    pass
+
 @dataclass
 class Page:
     """Class to store information of a page extracted from a pdf"""
@@ -134,8 +137,6 @@ class StudentRegister(Page):
             and the respective integer. No other words can be in between and
             these must be the last lines of the page.
         """
-        def no_header():
-            raise Exception('No header found')
         def first_student(lines) -> int | None:
             """Returns index of first student or None if no student is found"""
             N = len(lines)
@@ -169,7 +170,7 @@ class StudentRegister(Page):
         # Look for first student and update headerSize
         headerSize = first_student(lines)
         # It is not allowed to have an empty header
-        if(headerSize == 0): return no_header()
+        if(headerSize == 0): raise HeaderError("empty header")
 
         # Find footer and update footerSize
         footerSize = 0
@@ -183,7 +184,7 @@ class StudentRegister(Page):
             if(footerSize):
                 headerSize = self.get_size() - footerSize
             else:
-                return no_header()
+                raise HeaderError("invalid header: no student, no footer")
         self.headerSize = headerSize
         self.footerSize = footerSize
 
