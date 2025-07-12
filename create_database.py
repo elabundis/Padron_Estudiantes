@@ -225,7 +225,7 @@ class StudentRegister(Page):
                 return
         raise HeaderError('No information about "career" found')
 
-    def get_students(self) -> pd.DataFrame:
+    def get_students(self) -> pd.DataFrame | None:
         def check_names(name):
             if(len(name.split()) < 3):
                 print(f"Student name with fewer than three words: {name}")
@@ -242,6 +242,7 @@ class StudentRegister(Page):
             else:
                 raise Exception("bad code: use '0' for ids and '1' for names")
         student_info = self.readbody()
+        if(len(student_info)==0): return None
         students = [[], []] # First col. IDS, second col. names
         # Students are given by name and id in separate lines of 'self.lines'.
         # Sometimes the 'name' comes before the 'id' or the other way around.
