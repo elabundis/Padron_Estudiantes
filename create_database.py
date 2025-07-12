@@ -189,6 +189,42 @@ class StudentRegister(Page):
         self.headerSize = headerSize
         self.footerSize = footerSize
 
+    def analizeHeader(self, sep:str = ':'):
+        def resolve_conflicts(line, tags, sep=sep):
+            """
+            Assumes there was not enough space in the pdf line to print the
+            tags.
+            """
+            print("resolve_conflicts requires implementation")
+            print("using Page.analizeHeader instead")
+            Page.analizeHeader(self, sep)
+        keys = ['ESCUELA', 'CARRERA', 'PLAN', 'PERIODO', 'GRUPO']
+        data = {}
+        header = self.get_header().split("\n")
+        for line in header:
+            count = line.count(sep)
+            if(count==1):
+                # Look for 'ESCUELA'
+                fields = [field.strip() for field in line.split(sep)]
+                if(fields[0]==keys[0]):
+                    data[keys[0]] = fields[1]
+            elif(count>1):
+                kwd_pattern = lambda kwd: kwd + r"\s*" + sep + r"\s*(\d)\s*"
+                pattern = kwd_pattern(keys[1]) + r"(.*)"
+                pattern += "".join(kwd_pattern(kwd) for kwd in keys[2:])
+                match = re.match(pattern, line)
+                if(match):
+                    # Initialize CARRERA
+                    data[keys[1]] = match.group(1) + " " + match.group(2).strip()
+                    # The rest of the keywords
+                    N = len(match.groups())
+                    data.update({keys[i] : match.group(i+1) for i in range(2, N)})
+                    self.metadata = data
+                else:
+                    resolve_conflicts(line, keys[1:])
+                return
+        raise HeaderError('No information about "career" found')
+
     def get_students(self) -> pd.DataFrame:
         def check_names(name):
             if(len(name.split()) < 3):
