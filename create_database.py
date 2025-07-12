@@ -4,24 +4,22 @@ import reprlib
 
 import pymupdf
 
-from typing import List
+from dataclasses import dataclass, field
 
-class Page(object):
-    def __init__(self,
-                 lines: List[str],
-                 header:int = 8,
-                 footer:int = 2,
-                 metadata:dict[str, str] = {}):
-        self.lines = lines # List of lines
-        self.header = header
-        self.footer = footer
-        self.metadata = metadata
+@dataclass
+class Page:
+    """Class to store information of a page extracted from a pdf"""
+    lines: list[str]
+    headerSize: int = 8
+    footerSize: int = 2
+    metadata: dict[str, str] = field(default_factory=dict)
+
     def get_size(self) -> int:
         return len(self.lines)
     def get_headerSize(self) -> int:
-        return self.header
+        return self.headerSize
     def get_footerSize(self) -> int:
-        return self.footer
+        return self.footerSize
     def get_bodySize(self) -> int:
         N = self.get_size() - (self.get_footerSize() + self.get_headerSize())
         return N
@@ -36,7 +34,7 @@ class Page(object):
     def get_footer(self) -> str:
         N = self.get_footerSize()
         return "\n".join(self.lines[-N:])
-    def get_body(self) -> list[str]:
+    def readbody(self) -> list[str]:
         N = self.get_bodySize()
         idx = self.get_headerSize()
         return self.lines[idx:idx+N]
@@ -91,10 +89,12 @@ class Page(object):
         return "\n".join(self.lines)
     def __repr__(self) -> str:
         cls = self.__class__.__name__
-        string = '{}({}, header={!r}, footer={!r}, metadata={!r})'
+        string = '{}({}, headerSize={!r}, footerSize={!r}, metadata={!r})'
         # reprlib will shorten long strings and maximum number of list elements
-        return string.format(cls, reprlib.repr(self.lines), self.header,
-                             self.footer, self.metadata)
+        return string.format(cls, reprlib.repr(self.lines),
+                             self.get_headerSize(),
+                             self.get_footerSize(),
+                             self.get_metadata())
 
 class StudentRegister(Page):
     def get_students(self):
@@ -116,7 +116,7 @@ class StudentRegister(Page):
                 return check_names(student)
             else:
                 raise Exception("bad code: use '0' for ids and '1' for names")
-        student_info = self.get_body()
+        student_info = self.readbody()
         students = [[], []] # First col. IDS, second col. names
         # Students are given by name and id in separate lines of 'self.lines'.
         # Sometimes the 'name' comes before the 'id' or the other way around.
@@ -135,7 +135,7 @@ class StudentRegister(Page):
         return students
 
 
-def read_pdf(filename: str) -> List[List[str]]:
+def read_pdf(filename: str) -> list[list[str]]:
     """
     Turns pdf file into strings. It returns a list of pages, each page
     defined by a list of its lines.
@@ -157,7 +157,7 @@ def tables(filename: str):
     doc = read_pdf(filename)
     pages = []
     for i, page_lines in enumerate(doc):
-        page = StudentRegister(page_lines, header=8, footer=2)
+        page = StudentRegister(page_lines, headerSize=8, footerSize=2)
         page.allCapsNoAccents()
         page.analizeHeader()
         pages.append(page)
