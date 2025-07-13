@@ -1,10 +1,14 @@
 import argparse
+import pandas as pd
 import re
 import reprlib
 
 import pymupdf
 
 from dataclasses import dataclass, field
+
+class HeaderError(Exception):
+    pass
 
 @dataclass
 class Page:
@@ -97,19 +101,132 @@ class Page:
 
 @dataclass
 class StudentRegister(Page):
-    headerSize: int = 8
-    footerSize: int = 2
-    def get_students(self):
+    headerSize: int | None = None
+    footerSize: int | None = None
+
+    def is_id(self, string:str) -> bool:
+        # The ID must have the following form:
+        # starts with one or more digits then a dash (-) and then one digit
+        pattern = r"^\d+-\d$"
+        return bool(re.search(pattern, string))
+    def can_be_name(self, string) -> bool:
+        """
+        Assumes that string has been stripped (no spaces at start or end) and
+        has only capital letters.
+        """
+        # Matches alphabetic characters in Spanish and spaces
+        pattern = r"^[A-ZÑÜ ]+$"
+        exclude = "NOMBRE DEL ALUMNO"
+        if(re.search(pattern, string)):
+            if(len(string.split())>2 and string!=exclude):
+                return True
+        return False
+    def findSections(self) -> None:
+        """
+        Tries to find the sections on the student register: header, body, and
+        footer; it sets the headerSize and footerSize attributes.
+
+        A StudentRegister must always have a nonempty header. As such, this
+        method returns an Exception if header is not found.
+
+        Header:
+            The header is defined as the section from the top of the page and
+            before the first line where a student name or ID show up. Else,
+            before the footer is reached.
+        Footer:
+            The lines at the bottom that contain 'TOTAL DE ALUMNOS POR GRUPO'
+            and the respective integer. No other words can be in between and
+            these must be the last lines of the page.
+        """
+        def first_student(lines) -> int | None:
+            """Returns index of first student or None if no student is found"""
+            N = len(lines)
+            for i, line in enumerate(lines):
+                if(self.is_id(line)):
+                    if(i==0):
+                        if(self.can_be_name(lines[i+1])):
+                            return 0
+                    elif(i==N-1):
+                        if(self.can_be_name(lines[i-1])):
+                            return i-1
+                    elif(self.can_be_name(lines[i-1])):
+                        return i-1
+                    elif(self.can_be_name(lines[i+1])):
+                        return i
+                    raise Exception(f"Found student ID but not his name (ID: {line})")
+            return
+        def has_footer(lines, linesFooter):
+            assert(linesFooter==2)
+            footer_keyword = 'TOTAL DE ALUMNOS POR GRUPO'
+            for i, line in enumerate(lines[-linesFooter:]):
+                if(line.isdecimal()):
+                    # Check the other line for the footer_keyword
+                    string = lines[-1-i].translate(del_punctuation()).strip()
+                    if(string==footer_keyword):
+                        # Footer has been found
+                        return True
+            return False
+
+        lines = self.readlines()
+        # Look for first student and update headerSize
+        headerSize = first_student(lines)
+        # It is not allowed to have an empty header
+        if(headerSize == 0): raise HeaderError("empty header")
+
+        # Find footer and update footerSize
+        footerSize = 0
+        linesFooter = 2
+        if(has_footer(lines, linesFooter)):
+            footerSize = linesFooter
+
+        # If no students were found, check if there's a footer and update
+        # headerSize
+        if(not headerSize):
+            if(footerSize):
+                headerSize = self.get_size() - footerSize
+            else:
+                raise HeaderError("invalid header: no student, no footer")
+        self.headerSize = headerSize
+        self.footerSize = footerSize
+
+    def analizeHeader(self, sep:str = ':'):
+        def update_data(pattern, header, kwd, data):
+            match = re.search(pattern, header)
+            if(match):
+                data[kwd] = match.group(1).strip()
+        school_kwd = 'ESCUELA'
+        major_kwd = 'CARRERA'
+        other_kwd = ['PLAN', 'PERIODO', 'GRUPO']
+
+        kwd_pattern = lambda kwd: kwd + r"\s*" + sep + r"\s*"
+        pattern_school = kwd_pattern(school_kwd) + r"(\d+[A-Z ]+)\n"
+        major_split = other_kwd[0]
+        pattern_major = kwd_pattern(major_kwd) + r"(\d[A-Z ]+)" + major_split
+        pattern_other = [kwd_pattern(kwd) + r"(\d)" for kwd in other_kwd]
+
+        all_patterns = [pattern_school, pattern_major, *pattern_other]
+        all_kwd = [school_kwd, major_kwd, *other_kwd]
+
+        header = self.get_header()
+        data = {kwd:None for kwd in all_kwd}
+        for i, pattern in enumerate(all_patterns):
+            update_data(pattern, header, all_kwd[i], data)
+
+        # Try to find major if major_kwd was not found
+        if(data[major_kwd] == None):
+            pattern = (sep + r"\s*" + r"(\d\s*LICENCIATURA[A-Z, ]+)" +
+                       major_split)
+            update_data(pattern, header, major_kwd, data)
+        self.metadata.update(data)
+
+    def get_students(self) -> pd.DataFrame | None:
         def check_names(name):
             if(len(name.split()) < 3):
                 print(f"Student name with fewer than three words: {name}")
             if(re.search(r"\d", name)):
                 print(f"Student name with a digit: {name}")
         def check_ids(id):
-            # The ID must have the following form:
-            # starts with one or more digits then a dash (-) and then one digit
-            pattern = r"^\d+-\d$"
-            if(not re.search(pattern, id)):
+            if(not self.is_id(id)):
                 print(f"Wrong ID: {id}")
         def check_student(code, student):
             if(code==0):
@@ -119,6 +236,7 @@ class StudentRegister(Page):
             else:
                 raise Exception("bad code: use '0' for ids and '1' for names")
         student_info = self.readbody()
+        if(len(student_info)==0): return None
         students = [[], []] # First col. IDS, second col. names
         # Students are given by name and id in separate lines of 'self.lines'.
         # Sometimes the 'name' comes before the 'id' or the other way around.
@@ -134,7 +252,11 @@ class StudentRegister(Page):
             code = codes[i%2]
             check_student(code, student)
             students[code].append(student)
-        return students
+            data = {
+                'id': students[0],
+                'name': students[1]
+            }
+        return pd.DataFrame(data= data)
 
 
 def read_pdf(filename: str) -> list[list[str]]:
@@ -155,66 +277,20 @@ def read_pdf(filename: str) -> list[list[str]]:
 def translator():
     return str.maketrans({'Á': 'A', 'É':'E', 'Í':'I', 'Ó':'O', 'Ú':'U'})
 
-def tables(filename: str):
+def del_punctuation():
+    return str.maketrans({':' : '', ',' : '', '.' : ''})
+
+def create_tables(filename: str):
     doc = read_pdf(filename)
     pages = []
     for i, page_lines in enumerate(doc):
-        page = StudentRegister(page_lines, headerSize=8, footerSize=2)
+        page = StudentRegister(page_lines)
         page.allCapsNoAccents()
+        page.findSections()
         page.analizeHeader()
         pages.append(page)
     return pages
 
-def create_tables(filename):
-    """
-    Assumes txt file of a 'Padron' pdf has been created using py2pdf
-    """
-    with open(filename, 'r') as reader:
-        semesters = []
-        ids = []
-        names = []
-        # periodo = r"PERIODO: \d+"
-        periodo = "PERIODO:"
-        career = "licenciatura en informatica"
-
-        translator = str.maketrans('á', 'a')
-        line = reader.readline()
-        while(line != ''):
-            line_words = line.split()
-            # for empty lines
-            # if(line.strip()==''):
-            #     print(f"line {i+1} is empty", end='')
-            # periodo_found = re.search(periodo, line)
-            periodo_found = periodo in line_words
-            if(periodo_found):
-                filtered_line =  line.lower().translate(translator)
-                # Stop at the minute you find a different career
-                if(career not in filtered_line):
-                    return (semesters, ids, names)
-                # sem = periodo_found.group().split(':')[1]
-                idx = line_words.index(periodo) + 1
-                sem = line_words[idx]
-                print(f"retrieve semester: {sem}")
-                semesters.append(sem)
-                ids.append([])
-                names.append([])
-            if("ALUMNO" in line_words):
-                reader.readline()
-                is_id = True
-                while(True):
-                    line = reader.readline()
-                    isEmpty = line.strip() == ''
-                    if(isEmpty):
-                        if(is_id):
-                            is_id = False
-                        else:
-                            break
-                    elif(is_id):
-                        ids[-1].append(line.rstrip('\n'))
-                    else:
-                        names[-1].append(line.rstrip('\n'))
-            line = reader.readline()
-        return (semesters, ids, names)
 
 if(__name__ == '__main__'):
     parser = argparse.ArgumentParser()
@@ -222,5 +298,4 @@ if(__name__ == '__main__'):
         'filename', type=str
     )
     args = parser.parse_args()
-
     create_tables(args.filename)
