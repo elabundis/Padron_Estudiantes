@@ -190,40 +190,34 @@ class StudentRegister(Page):
         self.footerSize = footerSize
 
     def analizeHeader(self, sep:str = ':'):
-        def resolve_conflicts(line, tags, sep=sep):
-            """
-            Assumes there was not enough space in the pdf line to print the
-            tags.
-            """
-            print("resolve_conflicts requires implementation")
-            print("using Page.analizeHeader instead")
-            Page.analizeHeader(self, sep)
-        keys = ['ESCUELA', 'CARRERA', 'PLAN', 'PERIODO', 'GRUPO']
-        data = {}
-        header = self.get_header().split("\n")
-        for line in header:
-            count = line.count(sep)
-            if(count==1):
-                # Look for 'ESCUELA'
-                fields = [field.strip() for field in line.split(sep)]
-                if(fields[0]==keys[0]):
-                    data[keys[0]] = fields[1]
-            elif(count>1):
-                kwd_pattern = lambda kwd: kwd + r"\s*" + sep + r"\s*(\d)\s*"
-                pattern = kwd_pattern(keys[1]) + r"(.*)"
-                pattern += "".join(kwd_pattern(kwd) for kwd in keys[2:])
-                match = re.match(pattern, line)
-                if(match):
-                    # Initialize CARRERA
-                    data[keys[1]] = match.group(1) + " " + match.group(2).strip()
-                    # The rest of the keywords
-                    N = len(match.groups())
-                    data.update({keys[i] : match.group(i+1) for i in range(2, N)})
-                    self.metadata = data
-                else:
-                    resolve_conflicts(line, keys[1:])
-                return
-        raise HeaderError('No information about "career" found')
+        def update_data(pattern, header, kwd, data):
+            match = re.search(pattern, header)
+            if(match):
+                data[kwd] = match.group(1).strip()
+        school_kwd = 'ESCUELA'
+        major_kwd = 'CARRERA'
+        other_kwd = ['PLAN', 'PERIODO', 'GRUPO']
+
+        kwd_pattern = lambda kwd: kwd + r"\s*" + sep + r"\s*"
+        pattern_school = kwd_pattern(school_kwd) + r"(\d+[A-Z ]+)\n"
+        major_split = other_kwd[0]
+        pattern_major = kwd_pattern(major_kwd) + r"(\d[A-Z ]+)" + major_split
+        pattern_other = [kwd_pattern(kwd) + r"(\d)" for kwd in other_kwd]
+
+        all_patterns = [pattern_school, pattern_major, *pattern_other]
+        all_kwd = [school_kwd, major_kwd, *other_kwd]
+
+        header = self.get_header()
+        data = {kwd:None for kwd in all_kwd}
+        for i, pattern in enumerate(all_patterns):
+            update_data(pattern, header, all_kwd[i], data)
+
+        # Try to find major if major_kwd was not found
+        if(data[major_kwd] == None):
+            pattern = (sep + r"\s*" + r"(\d\s*LICENCIATURA[A-Z, ]+)" +
+                       major_split)
+            update_data(pattern, header, major_kwd, data)
+        self.metadata.update(data)
 
     def get_students(self) -> pd.DataFrame | None:
         def check_names(name):
