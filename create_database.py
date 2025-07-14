@@ -18,26 +18,25 @@ class Page:
     footerSize: int = 0
     metadata: dict[str, str] = field(default_factory=dict)
 
-    def get_size(self) -> int:
+    def numLines(self) -> int:
         return len(self.lines)
     def get_headerSize(self) -> int:
         return self.headerSize
     def get_footerSize(self) -> int:
         return self.footerSize
     def get_bodySize(self) -> int:
-        N = self.get_size() - (self.get_footerSize() + self.get_headerSize())
+        N = self.numLines() - (self.get_footerSize() + self.get_headerSize())
         return N
     def get_metadata(self):
         return self.metadata
-    def get_text(self) -> str:
-        N = self.get_size()
-        return "\n".join(self.lines[:N])
     def get_header(self) -> str:
         N = self.get_headerSize()
         return "\n".join(self.lines[:N])
     def get_footer(self) -> str:
         N = self.get_footerSize()
         return "\n".join(self.lines[-N:])
+    def read(self) -> str:
+        return "\n".join(self.lines)
     def readlines(self) -> list[str]:
         return self.lines
     def readbody(self) -> list[str]:
@@ -59,7 +58,7 @@ class Page:
         Modifies page: puts all text in caps and removes accents
         """
         for i, line in enumerate(self.lines):
-            self.lines[i] = line.upper().translate(translator())
+            self.lines[i] = line.upper().translate(del_accents())
         return None
     def analizeHeader(self, sep:str = ':'):
         """
@@ -183,7 +182,7 @@ class StudentRegister(Page):
         # headerSize
         if(not headerSize):
             if(footerSize):
-                headerSize = self.get_size() - footerSize
+                headerSize = self.numLines() - footerSize
             else:
                 raise HeaderError("invalid header: no student, no footer")
         self.headerSize = headerSize
@@ -274,7 +273,7 @@ def read_pdf(filename: str) -> list[list[str]]:
         pages.append(page.get_text().splitlines())
     return pages
 
-def translator():
+def del_accents():
     return str.maketrans({'Á': 'A', 'É':'E', 'Í':'I', 'Ó':'O', 'Ú':'U'})
 
 def del_punctuation():
