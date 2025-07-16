@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import argparse
 import pandas as pd
 import re
@@ -9,6 +11,62 @@ from dataclasses import dataclass, field
 
 class HeaderError(Exception):
     pass
+
+@dataclass
+class Padron:
+    studentRegisters: list[StudentRegister]
+    def padron(self) -> list[StudentRegister]:
+        return self.studentRegisters
+    def register(self, i:int) -> StudentRegister:
+        return self.studentRegisters[i]
+    def add_register(self, register:StudentRegister) -> None:
+        self.studentRegisters.append(register)
+    def get_numRegisters(self) -> int:
+        return len(self.studentRegisters)
+    def get_metadata(self, i:int) -> dict[str, str]:
+        register = self.padron()[i]
+        return register.get_metadata()
+    def get_registersFromMetadata(self, metadata:dict[str, str]) -> Padron:
+        """
+        Returns a new Padron from its studentRegisters that contain the given
+        'metadata'. The values used in the 'metadata' dictionary can be
+        substrings of the correponding values in this instance metadata, e.g,
+        the entry "CARRERA":"INFORMATICA" will match "CARRERA":"1 LICENCIATURA
+        EN INFORMATICA".
+
+        Note: The studentRegister instances are however not copied (just
+        new pointers); if modified, the changes will also be reflected in the
+        original Padron's studentRegisters attribute.
+        """
+        registers = self.padron()
+        keys = metadata.keys()
+        newPadron = []
+        # For each StudentRegister instance in the Padron
+        for register in registers:
+            # Check if all key, value pairs in metadata are found
+            found = True
+            register_meta = register.get_metadata()
+            for key in keys:
+                sought = metadata[key]
+                if(sought not in register_meta[key]):
+                    found = False
+                    break
+            if(found): newPadron.append(register)
+        return Padron(newPadron)
+    def info(self) -> None:
+        N = self.get_numRegisters()
+        for i in range(N):
+            print(f"Page {i}:")
+            print("\n".join(f"{label}: {val}" for label, val in
+                            self.get_metadata(i).items()) + "\n")
+    def __repr__(self) -> str:
+        repr = '{}({})'
+        cls = self.__class__.__name__
+        # reprlib will shorten long strings and maximum number of list elements
+        my_repr = reprlib.Repr()
+        my_repr.maxlist = 3
+        my_repr.maxother = 62
+        return repr.format(cls, my_repr.repr(self.studentRegisters))
 
 @dataclass
 class Page:
@@ -261,6 +319,9 @@ class StudentRegister(Page):
             data.get(col).append(student)
         return pd.DataFrame(data= data)
 
+    def __repr__(self) -> str:
+        return super().__repr__()
+
 
 def read_pdf(filename: str) -> list[list[str]]:
     """
@@ -292,7 +353,7 @@ def create_tables(filename: str):
         page.findSections()
         page.analizeHeader()
         pages.append(page)
-    return pages
+    return Padron(pages)
 
 
 if(__name__ == '__main__'):
