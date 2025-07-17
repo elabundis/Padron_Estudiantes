@@ -212,7 +212,7 @@ class StudentRegister(Page):
             update_data(pattern, header, all_kwd[i], data)
 
         # Try to find major if major_kwd was not found
-        if(data[major_kwd] == None):
+        if(data[major_kwd] is None):
             pattern = (sep + r"\s*" + r"(\d\s*LICENCIATURA[A-Z, ]+)" +
                        major_split)
             update_data(pattern, header, major_kwd, data)
@@ -251,10 +251,10 @@ class StudentRegister(Page):
             code = codes[i%2]
             check_student(code, student)
             students[code].append(student)
-            data = {
-                'id': students[0],
-                'name': students[1]
-            }
+        data = {
+            'id': students[0],
+            'name': students[1]
+        }
         return pd.DataFrame(data= data)
 
 
