@@ -26,13 +26,15 @@ class Padron:
     def get_metadata(self, i:int) -> dict[str, str]:
         register = self.padron()[i]
         return register.get_metadata()
-    def get_registersFromMetadata(self, metadata:dict[str, str|int]) -> Padron:
+    def get_registersFromMetadata(
+        self, metadata: dict[str, str | int]
+    ) -> list[StudentRegister]:
         """
-        Returns a new Padron from its studentRegisters that contain the given
-        'metadata'. The values used in the 'metadata' dictionary can be
-        substrings of the correponding values in this instance metadata, e.g,
-        the entry "CARRERA":"INFORMATICA" will match "CARRERA":"1 LICENCIATURA
-        EN INFORMATICA".
+        Returns the studentRegisters that contain the given 'metadata'. The
+        values used in the 'metadata' dictionary can be substrings of the
+        correponding values in this instance metadata, e.g, the entry
+        "CARRERA":"INFORMATICA" will match "CARRERA":"1 LICENCIATURA EN
+        INFORMATICA".
 
         Note: The studentRegister instances are however not copied (just
         new pointers); if modified, the changes will also be reflected in the
@@ -40,7 +42,7 @@ class Padron:
         """
         registers = self.padron()
         keys = metadata.keys()
-        newPadron = []
+        studentRegisters = []
         # For each StudentRegister instance in the Padron
         for register in registers:
             # Check if all key, value pairs in metadata are found
@@ -51,8 +53,8 @@ class Padron:
                 if(sought not in register_meta[key]):
                     found = False
                     break
-            if(found): newPadron.append(register)
-        return Padron(newPadron)
+            if(found): studentRegisters.append(register)
+        return studentRegisters
     def info(self) -> None:
         N = self.get_numRegisters()
         if(N==0): print("Empty Padron")
