@@ -72,6 +72,24 @@ class Padron:
         return repr.format(cls, my_repr.repr(self.studentRegisters))
 
 @dataclass
+class PadronCarrera(Padron):
+    major:str
+    school:str
+    plan:int
+    def get_students(self) -> pd.DataFrame:
+        tags = ['PERIODO', 'GRUPO']
+        df = pd.DataFrame({})
+        row_labels = []
+        for register in self.padron():
+            dataframe =  register.get_students()
+            metadata = register.get_metadata()
+            for tag in tags:
+                value = metadata[tag]
+                dataframe[tag] = value
+            df = pd.concat([df, dataframe], axis=0, ignore_index=True)
+        return df
+
+@dataclass
 class Page:
     """Class to store information of a page extracted from a pdf"""
     lines: list[str]
