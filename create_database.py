@@ -88,6 +88,10 @@ class PadronCarrera(Padron):
                 dataframe[tag] = value
             df = pd.concat([df, dataframe], axis=0, ignore_index=True)
         return df
+    def __repr__(self) -> str:
+        string = super().__repr__()
+        new = f", major={self.major}, school={self.school}, plan={self.plan})"
+        return string[:-1] + new
 
 @dataclass
 class Page:
