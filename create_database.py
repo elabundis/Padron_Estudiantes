@@ -55,6 +55,12 @@ class Padron:
                     break
             if(found): studentRegisters.append(register)
         return studentRegisters
+    def carrera(self, major, school, plan) -> PadronCarrera:
+        tags = ['CARRERA', 'ESCUELA', 'PLAN']
+        vals = [major, school, plan]
+        metadata = {tags[i]:vals[i] for i in range(len(tags))}
+        studentRegisters = self.get_registersFromMetadata(metadata)
+        return PadronCarrera(studentRegisters, *vals)
     def info(self) -> None:
         N = self.get_numRegisters()
         if(N==0): print("Empty Padron")
