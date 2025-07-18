@@ -26,7 +26,7 @@ class Padron:
     def get_metadata(self, i:int) -> dict[str, str]:
         register = self.padron()[i]
         return register.get_metadata()
-    def get_registersFromMetadata(self, metadata:dict[str, str]) -> Padron:
+    def get_registersFromMetadata(self, metadata:dict[str, str|int]) -> Padron:
         """
         Returns a new Padron from its studentRegisters that contain the given
         'metadata'. The values used in the 'metadata' dictionary can be
@@ -47,7 +47,7 @@ class Padron:
             found = True
             register_meta = register.get_metadata()
             for key in keys:
-                sought = metadata[key]
+                sought = str(metadata[key])
                 if(sought not in register_meta[key]):
                     found = False
                     break
@@ -55,6 +55,7 @@ class Padron:
         return Padron(newPadron)
     def info(self) -> None:
         N = self.get_numRegisters()
+        if(N==0): print("Empty Padron")
         for i in range(N):
             print(f"Page {i}:")
             print("\n".join(f"{label}: {val}" for label, val in
