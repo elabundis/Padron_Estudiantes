@@ -218,7 +218,7 @@ class StudentRegister(Page):
             update_data(pattern, header, major_kwd, data)
         self.metadata.update(data)
 
-    def get_students(self) -> pd.DataFrame | None:
+    def get_students(self) -> pd.DataFrame:
         def check_names(name):
             if(len(name.split()) < 3):
                 print(f"Student name with fewer than three words: {name}")
@@ -227,34 +227,28 @@ class StudentRegister(Page):
         def check_ids(id):
             if(not self.is_id(id)):
                 print(f"Wrong ID: {id}")
-        def check_student(code, student):
-            if(code==0):
+        def check_student(tag, student):
+            if(tag=='id'):
                 return check_ids(student)
-            elif(code==1):
+            elif(tag=='name'):
                 return check_names(student)
             else:
-                raise Exception("bad code: use '0' for ids and '1' for names")
+                raise Exception("bad tag: use 'id' or 'name'")
+        cols = ['id', 'name']
+        data = {col:[] for col in cols}
         student_info = self.readbody()
-        if(len(student_info)==0): return None
-        students = [[], []] # First col. IDS, second col. names
         # Students are given by name and id in separate lines of 'self.lines'.
         # Sometimes the 'name' comes before the 'id' or the other way around.
         # (Depending on what pdf reader library was used.) The following takes
         # care of that
-        first_name = len(student_info[0]) > 1  # A name entry must have more
-                                               # than one word
-        if(first_name):
-            codes = [1, 0]
-        else:
-            codes = [0, 1]
+        if(student_info):
+            # A name entry must have more than one word
+            numWords = len(student_info[0].split())
+            if(numWords > 1): cols.reverse() # name comes before id
         for i, student in enumerate(student_info):
-            code = codes[i%2]
-            check_student(code, student)
-            students[code].append(student)
-        data = {
-            'id': students[0],
-            'name': students[1]
-        }
+            col = cols[i%2]
+            check_student(col, student)
+            data.get(col).append(student)
         return pd.DataFrame(data= data)
 
 
