@@ -200,6 +200,8 @@ class StudentRegister(Page):
     headerSize: int | None = None
     footerSize: int | None = None
 
+    def numStudents(self) -> int:
+        return self.get_bodySize() // 2
     def is_id(self, string:str) -> bool:
         # The ID must have the following form:
         # starts with one or more digits then a dash (-) and then one digit
@@ -357,7 +359,10 @@ class StudentRegister(Page):
             check_student(col, student)
             data.get(col).append(student)
         return pd.DataFrame(data= data)
-
+    def info(self) -> None:
+        print("\n".join(f"{label}: {val}" for label, val in
+                        self.get_metadata().items()))
+        print(f"Students: {self.numStudents()}")
     def __repr__(self) -> str:
         return super().__repr__()
 
