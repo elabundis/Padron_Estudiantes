@@ -83,15 +83,23 @@ class PadronCarrera(Padron):
     school:str
     plan:int
     def get_students(self) -> pd.DataFrame:
+        """
+        Returns students in a dataframe with columns: 'id', 'name', 'PERIODO',
+        and 'GRUPO'
+        """
         tags = ['PERIODO', 'GRUPO']
         df = pd.DataFrame({})
         row_labels = []
+        # For each StudentRegister
         for register in self.padron():
             dataframe =  register.get_students()
             metadata = register.get_metadata()
+            # add on the students dataframe the new columns in 'tags' with
+            # corresponding values taken from its metadata
             for tag in tags:
                 value = metadata[tag]
                 dataframe[tag] = value
+            # and merge the resulting dataframes
             df = pd.concat([df, dataframe], axis=0, ignore_index=True)
         return df
     def __repr__(self) -> str:
