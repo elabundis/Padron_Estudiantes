@@ -110,15 +110,22 @@ class StudentRegister(Page):
         return bool(re.search(pattern, string))
     def can_be_name(self, string) -> bool:
         """
-        Assumes that string has been stripped (no spaces at start or end) and
-        has only capital letters.
+        Assumes that string has been stripped (no spaces at start or end),
+        has capital letters only and no accents.
+
+        The string can be a name (returns True) if it only contains characters
+        in the spanish alphabet and has more than two words (two last names and
+        at least one first name). There's a list of words in the method which
+        exclude the possibility that the 'string' be considered a name.
         """
         # Matches alphabetic characters in Spanish and spaces
         pattern = r"^[A-ZÑÜ ]+$"
-        exclude = "NOMBRE DEL ALUMNO"
+        # 'string' is not a good name if it contains any of these words
+        exclude = ["NOMBRE", "ALUMNO"]
         if(re.search(pattern, string)):
-            if(len(string.split())>2 and string!=exclude):
-                return True
+            if(len(string.split())>2):
+                if not any(elem in string for elem in exclude):
+                    return True
         return False
     def findSections(self) -> None:
         """
@@ -127,6 +134,9 @@ class StudentRegister(Page):
 
         A StudentRegister must always have a nonempty header. As such, this
         method returns an Exception if header is not found.
+
+        Assumes the text has been processed to have capital letters only and no
+        accents. (See self.allCapsNoAccents)
 
         Header:
             The header is defined as the section from the top of the page and
