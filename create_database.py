@@ -65,9 +65,9 @@ class Padron:
         N = self.get_numRegisters()
         if(N==0): print("Empty Padron")
         for i in range(N):
-            print(f"Page {i}:")
-            print("\n".join(f"{label}: {val}" for label, val in
-                            self.get_metadata(i).items()) + "\n")
+            print(f"Page {i}")
+            self.register(i).info()
+            print()
     def __repr__(self) -> str:
         repr = '{}({})'
         cls = self.__class__.__name__
