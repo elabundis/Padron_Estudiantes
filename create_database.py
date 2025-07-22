@@ -200,6 +200,29 @@ class StudentRegister(Page):
     headerSize: int | None = None
     footerSize: int | None = None
 
+    def __post_init__(self) -> None:
+        """
+        If headerSize and footerSize have been defined, check that the body
+        has two lines per student (one for id and another for the name)
+        """
+        if(self.headerSize is not None and self.footerSize is not None):
+            self._check_body()
+    def _check_body(self) -> None:
+        """Checks the students' section is correct; each student must have his
+        id and name in different lines. If not correct, it sets the headerSize
+        and footerSize to None and throws an AssertionError."""
+        bodySize = self.get_bodySize()
+        if(bodySize % 2 != 0):
+            msg = (
+                "The body should contain two lines for each student (one for "
+                f"id and another for the name), got {bodySize}:\n"
+                f"{self.readbody()}"
+            )
+            self.headerSize = None
+            self.footerSize = None
+            raise AssertionError(msg)
+    def numStudents(self) -> int:
+        return self.get_bodySize() // 2
     def is_id(self, string:str) -> bool:
         # The ID must have the following form:
         # starts with one or more digits then a dash (-) and then one digit
@@ -294,6 +317,9 @@ class StudentRegister(Page):
                 raise HeaderError("invalid header: no student, no footer")
         self.headerSize = headerSize
         self.footerSize = footerSize
+        # Make sure the body contains even number of lines (required for id and
+        # name per student)
+        self._check_body()
 
     def analizeHeader(self, sep:str = ':'):
         def update_data(pattern, header, kwd, data):
@@ -326,6 +352,7 @@ class StudentRegister(Page):
         self.metadata.update(data)
 
     def get_students(self) -> pd.DataFrame:
+        """Assumes the attributes headerSize and footerSize have been set"""
         def check_names(name):
             if(len(name.split()) < 3):
                 print(f"Student name with fewer than three words: {name}")
@@ -357,7 +384,10 @@ class StudentRegister(Page):
             check_student(col, student)
             data.get(col).append(student)
         return pd.DataFrame(data= data)
-
+    def info(self) -> None:
+        print("\n".join(f"{label}: {val}" for label, val in
+                        self.get_metadata().items()))
+        print(f"Students: {self.numStudents()}")
     def __repr__(self) -> str:
         return super().__repr__()
 
