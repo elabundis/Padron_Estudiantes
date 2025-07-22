@@ -119,6 +119,14 @@ class Page:
     footerSize: int = 0
     metadata: dict[str, str] = field(default_factory=dict)
 
+    def _good_size(self, size) -> bool:
+        return isinstance(size, int) and size >= 0
+    def _good_header_footer(self) -> bool:
+        good_ints = ( self._good_size(self.headerSize) and
+                     self._good_size(self.footerSize) )
+        return (
+            good_ints and (self.headerSize + self.footerSize)<=self.numLines()
+        )
     def numLines(self) -> int:
         return len(self.lines)
     def get_headerSize(self) -> int:
@@ -126,8 +134,20 @@ class Page:
     def get_footerSize(self) -> int:
         return self.footerSize
     def get_bodySize(self) -> int:
-        N = self.numLines() - (self.get_footerSize() + self.get_headerSize())
-        return N
+        if(self._good_header_footer()):
+            N = self.numLines() - (
+                self.get_footerSize() + self.get_headerSize()
+            )
+            return N
+        else:
+            msg = (
+                "set appropriate headerSize and footerSize, i.e., nonnegative "
+                "integers whose sum don't exceed the Page lines "
+                f"({self.numLines()}):\n"
+                f"headerSize={self.get_headerSize()}, "
+                f"footerSize={self.get_footerSize()}"
+            )
+            raise ValueError(msg)
     def get_metadata(self):
         return self.metadata
     def get_header(self) -> str:
