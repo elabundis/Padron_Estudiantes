@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import argparse
 import pandas as pd
 import re
@@ -9,6 +11,101 @@ from dataclasses import dataclass, field
 
 class HeaderError(Exception):
     pass
+
+@dataclass
+class Padron:
+    studentRegisters: list[StudentRegister]
+    def padron(self) -> list[StudentRegister]:
+        return self.studentRegisters
+    def register(self, i:int) -> StudentRegister:
+        return self.studentRegisters[i]
+    def add_register(self, register:StudentRegister) -> None:
+        self.studentRegisters.append(register)
+    def get_numRegisters(self) -> int:
+        return len(self.studentRegisters)
+    def get_metadata(self, i:int) -> dict[str, str]:
+        register = self.padron()[i]
+        return register.get_metadata()
+    def get_registersFromMetadata(
+        self, metadata: dict[str, str | int]
+    ) -> list[StudentRegister]:
+        """
+        Returns the studentRegisters that contain the given 'metadata'. The
+        values used in the 'metadata' dictionary can be substrings of the
+        correponding values in this instance metadata, e.g, the entry
+        "CARRERA":"INFORMATICA" will match "CARRERA":"1 LICENCIATURA EN
+        INFORMATICA".
+
+        Note: The studentRegister instances are however not copied (just
+        new pointers); if modified, the changes will also be reflected in the
+        original Padron's studentRegisters attribute.
+        """
+        registers = self.padron()
+        keys = metadata.keys()
+        studentRegisters = []
+        # For each StudentRegister instance in the Padron
+        for register in registers:
+            # Check if all key, value pairs in metadata are found
+            found = True
+            register_meta = register.get_metadata()
+            for key in keys:
+                sought = str(metadata[key])
+                if(sought not in register_meta[key]):
+                    found = False
+                    break
+            if(found): studentRegisters.append(register)
+        return studentRegisters
+    def carrera(self, major, school, plan) -> PadronCarrera:
+        tags = ['CARRERA', 'ESCUELA', 'PLAN']
+        vals = [major, school, plan]
+        metadata = {tags[i]:vals[i] for i in range(len(tags))}
+        studentRegisters = self.get_registersFromMetadata(metadata)
+        return PadronCarrera(studentRegisters, *vals)
+    def info(self) -> None:
+        N = self.get_numRegisters()
+        if(N==0): print("Empty Padron")
+        for i in range(N):
+            print(f"Page {i}:")
+            print("\n".join(f"{label}: {val}" for label, val in
+                            self.get_metadata(i).items()) + "\n")
+    def __repr__(self) -> str:
+        repr = '{}({})'
+        cls = self.__class__.__name__
+        # reprlib will shorten long strings and maximum number of list elements
+        my_repr = reprlib.Repr()
+        my_repr.maxlist = 3
+        my_repr.maxother = 62
+        return repr.format(cls, my_repr.repr(self.studentRegisters))
+
+@dataclass
+class PadronCarrera(Padron):
+    major:str
+    school:str
+    plan:int
+    def get_students(self) -> pd.DataFrame:
+        """
+        Returns students in a dataframe with columns: 'id', 'name', 'PERIODO',
+        and 'GRUPO'
+        """
+        tags = ['PERIODO', 'GRUPO']
+        df = pd.DataFrame({})
+        row_labels = []
+        # For each StudentRegister
+        for register in self.padron():
+            dataframe =  register.get_students()
+            metadata = register.get_metadata()
+            # add on the students dataframe the new columns in 'tags' with
+            # corresponding values taken from its metadata
+            for tag in tags:
+                value = metadata[tag]
+                dataframe[tag] = value
+            # and merge the resulting dataframes
+            df = pd.concat([df, dataframe], axis=0, ignore_index=True)
+        return df
+    def __repr__(self) -> str:
+        string = super().__repr__()
+        new = f", major={self.major}, school={self.school}, plan={self.plan})"
+        return string[:-1] + new
 
 @dataclass
 class Page:
@@ -261,6 +358,9 @@ class StudentRegister(Page):
             data.get(col).append(student)
         return pd.DataFrame(data= data)
 
+    def __repr__(self) -> str:
+        return super().__repr__()
+
 
 def read_pdf(filename: str) -> list[list[str]]:
     """
@@ -292,7 +392,7 @@ def create_tables(filename: str):
         page.findSections()
         page.analizeHeader()
         pages.append(page)
-    return pages
+    return Padron(pages)
 
 
 if(__name__ == '__main__'):
