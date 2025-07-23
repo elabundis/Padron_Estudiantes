@@ -58,12 +58,32 @@ class Padron:
                     break
             if(found): studentRegisters.append(register)
         return studentRegisters
-    def carrera(self, major, school, plan) -> PadronCarrera:
+    def carrera(self, major, faculty, plan) -> list[StudentRegister]:
         tags = ['CARRERA', 'ESCUELA', 'PLAN']
-        vals = [major, school, plan]
+        vals = [major, faculty, plan]
         metadata = {tags[i]:vals[i] for i in range(len(tags))}
         studentRegisters = self.get_registersFromMetadata(metadata)
-        return PadronCarrera(studentRegisters, *vals)
+        return studentRegisters
+    def get_students(self, major, faculty, plan) -> YearRecord:
+        """
+        Returns students in a dataframe with columns: 'id', 'name', 'PERIODO',
+        and 'GRUPO'
+        """
+        tags = ['PERIODO', 'GRUPO']
+        df = pd.DataFrame({})
+        # For each StudentRegister
+        registers = self.carrera(major, faculty, plan)
+        for register in registers:
+            dataframe =  register.get_students()
+            metadata = register.get_metadata()
+            # add on the students dataframe the new columns in 'tags' with
+            # corresponding values taken from its metadata
+            for tag in tags:
+                value = metadata[tag]
+                dataframe[tag] = value
+            # and merge the resulting dataframes
+            df = pd.concat([df, dataframe], axis=0, ignore_index=True)
+        return YearRecord(self.get_year(), major, faculty, plan, df)
     def info(self) -> None:
         N = self.get_numRegisters()
         if(N==0): print("Empty Padron")
@@ -80,36 +100,6 @@ class Padron:
         my_repr.maxlist = 3
         my_repr.maxother = 62
         return repr.format(cls, my_repr.repr(self.studentRegisters))
-
-@dataclass
-class PadronCarrera(Padron):
-    major:str
-    school:str
-    plan:int
-    def get_students(self) -> pd.DataFrame:
-        """
-        Returns students in a dataframe with columns: 'id', 'name', 'PERIODO',
-        and 'GRUPO'
-        """
-        tags = ['PERIODO', 'GRUPO']
-        df = pd.DataFrame({})
-        row_labels = []
-        # For each StudentRegister
-        for register in self.padron():
-            dataframe =  register.get_students()
-            metadata = register.get_metadata()
-            # add on the students dataframe the new columns in 'tags' with
-            # corresponding values taken from its metadata
-            for tag in tags:
-                value = metadata[tag]
-                dataframe[tag] = value
-            # and merge the resulting dataframes
-            df = pd.concat([df, dataframe], axis=0, ignore_index=True)
-        return df
-    def __repr__(self) -> str:
-        string = super().__repr__()
-        new = f", major={self.major}, school={self.school}, plan={self.plan})"
-        return string[:-1] + new
 
 @dataclass
 class YearRecord:
