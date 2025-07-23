@@ -15,8 +15,11 @@ class HeaderError(Exception):
 @dataclass
 class Padron:
     studentRegisters: list[StudentRegister]
+    year: int
     def padron(self) -> list[StudentRegister]:
         return self.studentRegisters
+    def get_year(self) -> int:
+        return self.year
     def register(self, i:int) -> StudentRegister:
         return self.studentRegisters[i]
     def add_register(self, register:StudentRegister) -> None:
@@ -64,6 +67,7 @@ class Padron:
     def info(self) -> None:
         N = self.get_numRegisters()
         if(N==0): print("Empty Padron")
+        print(f"\nPadron {self.get_year()}\n")
         for i in range(N):
             print(f"Page {i}")
             self.register(i).info()
@@ -413,7 +417,7 @@ def del_accents():
 def del_punctuation():
     return str.maketrans({':' : '', ',' : '', '.' : ''})
 
-def create_tables(filename: str):
+def create_padron(filename: str, year: int) -> Padron:
     doc = read_pdf(filename)
     pages = []
     for i, page_lines in enumerate(doc):
@@ -422,7 +426,7 @@ def create_tables(filename: str):
         page.findSections()
         page.analizeHeader()
         pages.append(page)
-    return Padron(pages)
+    return Padron(pages, year)
 
 
 if(__name__ == '__main__'):
@@ -430,5 +434,9 @@ if(__name__ == '__main__'):
     parser.add_argument(
         'filename', type=str
     )
+    parser.add_argument(
+        'year', type=int
+    )
     args = parser.parse_args()
-    create_tables(args.filename)
+    Padron = create_padron(args.filename, args.year)
+    Padron.info()
