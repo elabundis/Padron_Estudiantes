@@ -30,33 +30,35 @@ class Padron:
         register = self.padron()[i]
         return register.get_metadata()
     def get_registersFromMetadata(
-        self, metadata: dict[str, str | int]
+        self, request: dict[str, str | int]
     ) -> list[StudentRegister]:
         """
-        Returns the studentRegisters that contain the given 'metadata'. The
-        values used in the 'metadata' dictionary can be substrings of the
-        correponding values in this instance metadata, e.g, the entry
+        Returns the StudentRegisters whose metadata contain the keys and values
+        in the dictionary 'request'. The values used in 'request' can be
+        substrings of the correponding values in metadata, e.g, the entry
         "CARRERA":"INFORMATICA" will match "CARRERA":"1 LICENCIATURA EN
         INFORMATICA".
+
+        Assumes the keys in request exist in every StudentRegister.
 
         Note: The studentRegister instances are however not copied (just
         new pointers); if modified, the changes will also be reflected in the
         original Padron's studentRegisters attribute.
         """
-        registers = self.padron()
-        keys = metadata.keys()
         studentRegisters = []
+        keys_of_interest = request.keys()
         # For each StudentRegister instance in the Padron
+        registers = self.padron()
         for register in registers:
-            # Check if all key, value pairs in metadata are found
-            found = True
-            register_meta = register.get_metadata()
-            for key in keys:
-                sought = str(metadata[key])
-                if(sought not in register_meta[key]):
-                    found = False
+            # Check if all key, value pairs in request are found
+            found_all = True
+            metadata = register.get_metadata()
+            for key in keys_of_interest:
+                val_of_interest = str(request[key])
+                if(val_of_interest not in metadata[key]):
+                    found_all = False
                     break
-            if(found): studentRegisters.append(register)
+            if(found_all): studentRegisters.append(register)
         return studentRegisters
     def carrera(self, major, faculty, plan) -> list[StudentRegister]:
         tags = ['CARRERA', 'ESCUELA', 'PLAN']
