@@ -29,41 +29,78 @@ class Padron:
     def get_metadata(self, i:int) -> dict[str, str]:
         register = self.padron()[i]
         return register.get_metadata()
+    def match(self, key:str, val:str) -> str|None:
+        """Finds a string in the values of metadata that contains 'val' and
+        has the given 'key'. It returns the first such string it finds."""
+        for register in self.padron():
+            metadata_val = register.get_metadata()[key]
+            if(val in metadata_val):
+                return metadata_val
+        return
     def get_registersFromMetadata(
-        self, metadata: dict[str, str | int]
+        self, request: dict[str, str | int]
     ) -> list[StudentRegister]:
         """
-        Returns the studentRegisters that contain the given 'metadata'. The
-        values used in the 'metadata' dictionary can be substrings of the
-        correponding values in this instance metadata, e.g, the entry
-        "CARRERA":"INFORMATICA" will match "CARRERA":"1 LICENCIATURA EN
-        INFORMATICA".
+        Returns the StudentRegisters whose metadata contain the keys and values
+        in the dictionary 'request'.
+
+        Assumes the keys in request exist in every StudentRegister.
 
         Note: The studentRegister instances are however not copied (just
         new pointers); if modified, the changes will also be reflected in the
         original Padron's studentRegisters attribute.
         """
-        registers = self.padron()
-        keys = metadata.keys()
         studentRegisters = []
+        # Obtain the exact values of interest (not just substrings). Ensures no
+        # two different schools or majors are matched.
+        keys_of_interest = request.keys()
         # For each StudentRegister instance in the Padron
+        registers = self.padron()
         for register in registers:
-            # Check if all key, value pairs in metadata are found
-            found = True
-            register_meta = register.get_metadata()
-            for key in keys:
-                sought = str(metadata[key])
-                if(sought not in register_meta[key]):
-                    found = False
+            # Check if all key, value pairs in request are found
+            found_all = True
+            metadata = register.get_metadata()
+            for key in keys_of_interest:
+                val_of_interest = str(request[key])
+                if(val_of_interest != metadata[key]):
+                    found_all = False
                     break
-            if(found): studentRegisters.append(register)
+            if(found_all): studentRegisters.append(register)
         return studentRegisters
-    def carrera(self, major, school, plan) -> PadronCarrera:
+    def carrera(self, major:str, faculty:str, plan:str|int) -> list[StudentRegister]:
         tags = ['CARRERA', 'ESCUELA', 'PLAN']
-        vals = [major, school, plan]
+        vals = [major, faculty, plan]
         metadata = {tags[i]:vals[i] for i in range(len(tags))}
         studentRegisters = self.get_registersFromMetadata(metadata)
-        return PadronCarrera(studentRegisters, *vals)
+        return studentRegisters
+    def get_students(self, major:str, faculty:str, plan:str|int) -> YearRecord:
+        """
+        Returns students of a given major as a YearRecord (see its docs).
+
+        The values used for 'major' and 'faculty' can be substrings of the
+        correponding values in metadata, e.g, the entry "INFORMATICA" will
+        match "1 LICENCIATURA EN INFORMATICA".
+        """
+        df = pd.DataFrame({})
+        major = self.match('CARRERA', major)
+        faculty = self.match('ESCUELA', faculty)
+        if(major is None or faculty is None):
+            return YearRecord(self.get_year(), major, faculty, int(plan), df)
+
+        tags = ['PERIODO', 'GRUPO']
+        # For each StudentRegister
+        registers = self.carrera(major, faculty, plan)
+        for register in registers:
+            dataframe =  register.get_students()
+            metadata = register.get_metadata()
+            # add on the students dataframe the new columns in 'tags' with
+            # corresponding values taken from its metadata
+            for tag in tags:
+                value = metadata[tag]
+                dataframe[tag] = value
+            # and merge the resulting dataframes
+            df = pd.concat([df, dataframe], axis=0, ignore_index=True)
+        return YearRecord(self.get_year(), major, faculty, int(plan), df)
     def info(self) -> None:
         N = self.get_numRegisters()
         if(N==0): print("Empty Padron")
@@ -82,34 +119,20 @@ class Padron:
         return repr.format(cls, my_repr.repr(self.studentRegisters))
 
 @dataclass
-class PadronCarrera(Padron):
-    major:str
-    school:str
-    plan:int
-    def get_students(self) -> pd.DataFrame:
-        """
-        Returns students in a dataframe with columns: 'id', 'name', 'PERIODO',
-        and 'GRUPO'
-        """
-        tags = ['PERIODO', 'GRUPO']
-        df = pd.DataFrame({})
-        row_labels = []
-        # For each StudentRegister
-        for register in self.padron():
-            dataframe =  register.get_students()
-            metadata = register.get_metadata()
-            # add on the students dataframe the new columns in 'tags' with
-            # corresponding values taken from its metadata
-            for tag in tags:
-                value = metadata[tag]
-                dataframe[tag] = value
-            # and merge the resulting dataframes
-            df = pd.concat([df, dataframe], axis=0, ignore_index=True)
-        return df
-    def __repr__(self) -> str:
-        string = super().__repr__()
-        new = f", major={self.major}, school={self.school}, plan={self.plan})"
-        return string[:-1] + new
+class YearRecord:
+    """
+    Keeps track, by means of a dataframe 'df', of students of a given 'major'
+    in a 'faculty', whose curricula correspond to a certain 'plan' a given
+    'year'.
+
+    The dataframe must contain the columns: 'id', 'name', 'PERIODO', and
+    'GRUPO'
+    """
+    year: int
+    major: str
+    faculty: str
+    plan: int
+    df: pd.DataFrame
 
 @dataclass
 class Page:
