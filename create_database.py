@@ -65,10 +65,7 @@ class Padron:
         studentRegisters = self.get_registersFromMetadata(metadata)
         return studentRegisters
     def get_students(self, major, faculty, plan) -> YearRecord:
-        """
-        Returns students in a dataframe with columns: 'id', 'name', 'PERIODO',
-        and 'GRUPO'
-        """
+        """Returns students of a given major as a YearRecord (see its docs)"""
         tags = ['PERIODO', 'GRUPO']
         df = pd.DataFrame({})
         # For each StudentRegister
