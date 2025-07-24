@@ -81,11 +81,13 @@ class Padron:
         correponding values in metadata, e.g, the entry "INFORMATICA" will
         match "1 LICENCIATURA EN INFORMATICA".
         """
+        df = pd.DataFrame({})
         major = self.match('CARRERA', major)
         faculty = self.match('ESCUELA', faculty)
+        if(major is None or faculty is None):
+            return YearRecord(self.get_year(), major, faculty, int(plan), df)
 
         tags = ['PERIODO', 'GRUPO']
-        df = pd.DataFrame({})
         # For each StudentRegister
         registers = self.carrera(major, faculty, plan)
         for register in registers:
