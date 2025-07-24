@@ -42,10 +42,7 @@ class Padron:
     ) -> list[StudentRegister]:
         """
         Returns the StudentRegisters whose metadata contain the keys and values
-        in the dictionary 'request'. The values used in 'request' can be
-        substrings of the correponding values in metadata, e.g, the entry
-        "CARRERA":"INFORMATICA" will match "CARRERA":"1 LICENCIATURA EN
-        INFORMATICA".
+        in the dictionary 'request'.
 
         Assumes the keys in request exist in every StudentRegister.
 
@@ -56,7 +53,6 @@ class Padron:
         studentRegisters = []
         # Obtain the exact values of interest (not just substrings). Ensures no
         # two different schools or majors are matched.
-        request = {key:self.match(key,str(val)) for key,val in request.items()}
         keys_of_interest = request.keys()
         # For each StudentRegister instance in the Padron
         registers = self.padron()
@@ -65,20 +61,29 @@ class Padron:
             found_all = True
             metadata = register.get_metadata()
             for key in keys_of_interest:
-                val_of_interest = request[key]
+                val_of_interest = str(request[key])
                 if(val_of_interest != metadata[key]):
                     found_all = False
                     break
             if(found_all): studentRegisters.append(register)
         return studentRegisters
-    def carrera(self, major, faculty, plan) -> list[StudentRegister]:
+    def carrera(self, major:str, faculty:str, plan:str|int) -> list[StudentRegister]:
         tags = ['CARRERA', 'ESCUELA', 'PLAN']
         vals = [major, faculty, plan]
         metadata = {tags[i]:vals[i] for i in range(len(tags))}
         studentRegisters = self.get_registersFromMetadata(metadata)
         return studentRegisters
-    def get_students(self, major, faculty, plan) -> YearRecord:
-        """Returns students of a given major as a YearRecord (see its docs)"""
+    def get_students(self, major:str, faculty:str, plan:str|int) -> YearRecord:
+        """
+        Returns students of a given major as a YearRecord (see its docs).
+
+        The values used for 'major' and 'faculty' can be substrings of the
+        correponding values in metadata, e.g, the entry "INFORMATICA" will
+        match "1 LICENCIATURA EN INFORMATICA".
+        """
+        major = self.match('CARRERA', major)
+        faculty = self.match('ESCUELA', faculty)
+
         tags = ['PERIODO', 'GRUPO']
         df = pd.DataFrame({})
         # For each StudentRegister
@@ -93,7 +98,7 @@ class Padron:
                 dataframe[tag] = value
             # and merge the resulting dataframes
             df = pd.concat([df, dataframe], axis=0, ignore_index=True)
-        return YearRecord(self.get_year(), major, faculty, plan, df)
+        return YearRecord(self.get_year(), major, faculty, int(plan), df)
     def info(self) -> None:
         N = self.get_numRegisters()
         if(N==0): print("Empty Padron")
