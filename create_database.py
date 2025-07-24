@@ -29,6 +29,14 @@ class Padron:
     def get_metadata(self, i:int) -> dict[str, str]:
         register = self.padron()[i]
         return register.get_metadata()
+    def match(self, key:str, val:str) -> str|None:
+        """Finds a string in the values of metadata that contains 'val' and
+        has the given 'key'. It returns the first such string it finds."""
+        for register in self.padron():
+            metadata_val = register.get_metadata()[key]
+            if(val in metadata_val):
+                return metadata_val
+        return
     def get_registersFromMetadata(
         self, request: dict[str, str | int]
     ) -> list[StudentRegister]:
@@ -46,6 +54,9 @@ class Padron:
         original Padron's studentRegisters attribute.
         """
         studentRegisters = []
+        # Obtain the exact values of interest (not just substrings). Ensures no
+        # two different schools or majors are matched.
+        request = {key:self.match(key,str(val)) for key,val in request.items()}
         keys_of_interest = request.keys()
         # For each StudentRegister instance in the Padron
         registers = self.padron()
@@ -54,8 +65,8 @@ class Padron:
             found_all = True
             metadata = register.get_metadata()
             for key in keys_of_interest:
-                val_of_interest = str(request[key])
-                if(val_of_interest not in metadata[key]):
+                val_of_interest = request[key]
+                if(val_of_interest != metadata[key]):
                     found_all = False
                     break
             if(found_all): studentRegisters.append(register)
