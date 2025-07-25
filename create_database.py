@@ -197,6 +197,9 @@ class Page:
         """Removes spaces at start and end of each line"""
         no_spaces = [line.strip() for line in self.lines]
         self.lines = no_spaces
+    def remove_extra_space(self) -> None:
+        """Exchanges two or more consecutive spaces in the text for one"""
+        self.lines = [del_extra_space(line) for line in self.readlines()]
     def allCapsNoAccents(self) -> None:
         """
         Modifies page: puts all text in caps and removes accents
@@ -460,12 +463,22 @@ def del_accents():
 def del_punctuation():
     return str.maketrans({':' : '', ',' : '', '.' : ''})
 
+def del_extra_space(line: str, verbose: bool = False) -> str:
+    """Returns string where ocurrances of two or more consecutive white spaces
+    in 'line' are replaced by one"""
+    pattern = r"\s{2,}"
+    if(verbose):
+        if(re.search(pattern, line)):
+            print(f"extra spaces found: {line}")
+    return re.sub(pattern, " ", line)
+
 def create_padron(filename: str, year: int) -> Padron:
     doc = read_pdf(filename)
     pages = []
     for i, page_lines in enumerate(doc):
         page = StudentRegister(page_lines)
         page.allCapsNoAccents()
+        page.remove_extra_space()
         page.findSections()
         page.analizeHeader()
         pages.append(page)
