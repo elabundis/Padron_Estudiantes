@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-import pandas as pd
 import re
 import reprlib
+from dataclasses import dataclass, field
 
+import pandas as pd
 import pymupdf
 
-from dataclasses import dataclass, field
 from records import YearRecord
+
 
 class HeaderError(Exception):
     pass
