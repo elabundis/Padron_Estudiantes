@@ -7,6 +7,7 @@ import reprlib
 import pymupdf
 
 from dataclasses import dataclass, field
+from records import YearRecord
 
 class HeaderError(Exception):
     pass
@@ -116,22 +117,6 @@ class Padron:
         my_repr.maxlist = 3
         my_repr.maxother = 62
         return repr.format(cls, my_repr.repr(self.studentRegisters))
-
-@dataclass
-class YearRecord:
-    """
-    Keeps track, by means of a dataframe 'df', of students of a given 'major'
-    in a 'faculty', whose curricula correspond to a certain 'plan' a given
-    'year'.
-
-    The dataframe must contain the columns: 'id', 'name', 'PERIODO', and
-    'GRUPO'
-    """
-    year: int
-    major: str
-    faculty: str
-    plan: int
-    df: pd.DataFrame
 
 @dataclass
 class Page:
