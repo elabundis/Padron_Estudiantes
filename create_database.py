@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import argparse
 import pandas as pd
 import re
 import reprlib
@@ -484,15 +483,3 @@ def create_padron(filename: str, year: int) -> Padron:
         pages.append(page)
     return Padron(pages, year)
 
-
-if(__name__ == '__main__'):
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        'filename', type=str
-    )
-    parser.add_argument(
-        'year', type=int
-    )
-    args = parser.parse_args()
-    Padron = create_padron(args.filename, args.year)
-    Padron.info()
