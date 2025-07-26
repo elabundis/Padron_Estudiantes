@@ -1,3 +1,9 @@
+# Jupyter Notebook
+.ipynb_checkpoints
+# exclude notebooks except for those at the 'Notebooks' directory
+*.ipynb
+!Notebooks/*.ipynb
+
 # Byte-compiled
 __pycache__/
 
